@@ -1,0 +1,2 @@
+@include('front.elements.page-banner', ['pageTitle' => 'Online Payment', 'breadcrumbs' => [['label' => 'Payment']]])
+<div class="section storefront-status-section"><div class="container"><div class="storefront-status-card"><h2>Online payment setup is pending</h2><p>Card gateway integration will be enabled separately.</p><a href="{{ url('cart') }}" class="btn btn-primary rounded-pill">Return To Cart</a></div></div></div>

@@ -14,9 +14,7 @@ use App\Services\Schema\ProductSchemaService;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::match(['get', 'post'], '/', 'App\Http\Controllers\FrontController@home');
 /* Front Panel */
     Route::get('/test-schema/{id}', function ($id, ProductSchemaService $schemaService) {
         $product = Product::findOrFail($id);
@@ -25,11 +23,10 @@ Route::get('/', function () {
             ->header('Content-Type', 'application/ld+json');
     });
     // before login
-        // Route::match(['get', 'post'], '/', 'App\Http\Controllers\FrontController@home');
         Route::match(['get', 'post'], 'products/{id1}', 'App\Http\Controllers\FrontController@category');
         Route::match(['get', 'post'], 'products/{id1}/{id2}', 'App\Http\Controllers\FrontController@subcategory');
         Route::match(['get', 'post'], 'product-sorting/{id1}/{id2}', 'App\Http\Controllers\FrontController@productSorting');
-        Route::match(['get', 'post'], 'product/{id1}/{id2}', 'App\Http\Controllers\FrontController@productDetails');
+        Route::get('product/{id1}/{id2}', 'App\Http\Controllers\FrontController@productDetails');
         Route::match(['get', 'post'], 'get-size-wise-attributes', 'App\Http\Controllers\FrontController@getSizeWiseAttributes');
         Route::match(['get', 'post'], 'get-variation-price', 'App\Http\Controllers\FrontController@getVariationPrice');
         Route::match(['get', 'post'], 'make-wishlist/{id1}', 'App\Http\Controllers\FrontController@makeWishlist');
@@ -38,6 +35,8 @@ Route::get('/', function () {
         Route::match(['get', 'post'], 'remove-coupon', 'App\Http\Controllers\FrontController@removeCoupon');
         Route::match(['get', 'post'], 'cart-item-remove/{id1}', 'App\Http\Controllers\FrontController@cartItemRemove');
         Route::match(['get', 'post'], 'update-cart-item/{id1}', 'App\Http\Controllers\FrontController@updateCartItem');
+        Route::post('update-cart', 'App\Http\Controllers\FrontController@updateCart');
+        Route::post('clear-cart', 'App\Http\Controllers\FrontController@clearCart');
         Route::match(['get', 'post'], 'checkout', 'App\Http\Controllers\FrontController@checkout');
         Route::match(['get', 'post'], 'place-order', 'App\Http\Controllers\FrontController@placeOrder');
 		Route::match(['get', 'post'], 'pay-by-card/{id1}', 'App\Http\Controllers\FrontController@payByCard');
@@ -55,6 +54,9 @@ Route::get('/', function () {
         Route::get('paypal/payment/cancel/{id1}', [PayPalController::class, 'paymentCancel'])->name('paypal.payment/cancel');
 
         Route::match(['get', 'post'], '/specials', 'App\Http\Controllers\FrontController@specials');
+        Route::get('blogs', 'App\Http\Controllers\FrontController@blogs');
+        Route::get('blogs/category/{id1}', 'App\Http\Controllers\FrontController@blogs');
+        Route::get('blog/{id1}', 'App\Http\Controllers\FrontController@blogDetails');
         Route::match(['get', 'post'], '/contact', 'App\Http\Controllers\FrontController@contactUs');
         Route::match(['get', 'post'], '/faq', 'App\Http\Controllers\FrontController@faq');
         Route::match(['get', 'post'], 'page/{id1}', 'App\Http\Controllers\FrontController@page');
@@ -84,7 +86,6 @@ Route::get('/', function () {
             Route::match(['get','post'], '/print-invoice/{id}', 'App\Http\Controllers\FrontController@printInvoice');
             Route::match(['get','post'], '/wishlist', 'App\Http\Controllers\FrontController@wishlist');
             Route::match(['get','post'], '/wishlist-product-delete/{id}', 'App\Http\Controllers\FrontController@wishlistProductDelete');
-            Route::match(['get','post'], '/reviews', 'App\Http\Controllers\FrontController@reviews');
             Route::get('/signout', 'App\Http\Controllers\FrontController@signout');
         });
     // after login

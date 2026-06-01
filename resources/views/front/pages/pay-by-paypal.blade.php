@@ -1,0 +1,2 @@
+@include('front.elements.page-banner', ['pageTitle' => 'PayPal Payment', 'breadcrumbs' => [['label' => 'Payment']]])
+<div class="section storefront-status-section"><div class="container"><div class="storefront-status-card"><h2>PayPal setup is pending</h2><p>PayPal integration will be enabled separately.</p><a href="{{ url('cart') }}" class="btn btn-primary rounded-pill">Return To Cart</a></div></div></div>

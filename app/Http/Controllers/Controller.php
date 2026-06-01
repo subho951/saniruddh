@@ -13,6 +13,7 @@ use App\Models\Category;
 use App\Models\Admin;
 use App\Models\User;
 use App\Models\UserAccess;
+use App\Models\OrderDetail;
 use Session;
 use Helper;
 class Controller extends BaseController
@@ -21,37 +22,47 @@ class Controller extends BaseController
     use ValidatesRequests;
     protected function sendMail($email, $subject, $message, $file = '')
     {
-        $generalSetting             = GeneralSetting::find('1');
-        $mailLibrary                = new PHPMailer(true);
-        $mailLibrary->CharSet       = 'UTF-8';
-        $mailLibrary->SMTPDebug     = 0;
-        $mailLibrary->IsSMTP();
-        $mailLibrary->Host          = $generalSetting->smtp_host;
-        $mailLibrary->SMTPAuth      = true;
-        $mailLibrary->Port          = $generalSetting->smtp_port;
-        $mailLibrary->Username      = $generalSetting->smtp_username;
-        $mailLibrary->Password      = $generalSetting->smtp_password;
-        $mailLibrary->SMTPSecure    = 'tls';
-        $mailLibrary->From          = $generalSetting->from_email;
-        $mailLibrary->FromName      = $generalSetting->from_name;
-        $mailLibrary->AddReplyTo($generalSetting->from_email, $generalSetting->from_name);
-        if(is_array($email)) :
-            foreach($email as $eml):
-                $mailLibrary->addAddress($eml);
-            endforeach;
-        else:
-            $mailLibrary->addAddress($email);
-        endif;
-        //$mailLibrary->AddCC('subhomoysamanta1989@gmail.com', 'Subhomoy Samanta');
-        $mailLibrary->WordWrap      = 5000;
-        $mailLibrary->Subject       = $subject;
-        $mailLibrary->Body          = $message;
-        $mailLibrary->isHTML(true);
-        if (!empty($file)):
-            $mailLibrary->AddAttachment($file);
-        endif;
-      	//Helper::pr($mailLibrary);
-        return (!$mailLibrary->send()) ? false : true;
+        if (trim((string) $message) === '') {
+            logger()->warning('Email delivery skipped because the message body is empty.', ['subject' => $subject]);
+            return false;
+        }
+
+        try {
+            $generalSetting             = GeneralSetting::find('1');
+            $mailLibrary                = new PHPMailer(true);
+            $mailLibrary->CharSet       = 'UTF-8';
+            $mailLibrary->SMTPDebug     = 0;
+            $mailLibrary->IsSMTP();
+            $mailLibrary->Host          = $generalSetting->smtp_host;
+            $mailLibrary->SMTPAuth      = true;
+            $mailLibrary->Port          = $generalSetting->smtp_port;
+            $mailLibrary->Username      = $generalSetting->smtp_username;
+            $mailLibrary->Password      = $generalSetting->smtp_password;
+            $mailLibrary->SMTPSecure    = 'tls';
+            $mailLibrary->From          = $generalSetting->from_email;
+            $mailLibrary->FromName      = $generalSetting->from_name;
+            $mailLibrary->AddReplyTo($generalSetting->from_email, $generalSetting->from_name);
+            if(is_array($email)) :
+                foreach($email as $eml):
+                    $mailLibrary->addAddress($eml);
+                endforeach;
+            else:
+                $mailLibrary->addAddress($email);
+            endif;
+            //$mailLibrary->AddCC('subhomoysamanta1989@gmail.com', 'Subhomoy Samanta');
+            $mailLibrary->WordWrap      = 5000;
+            $mailLibrary->Subject       = $subject;
+            $mailLibrary->Body          = $message;
+            $mailLibrary->isHTML(true);
+            if (!empty($file)):
+                $mailLibrary->AddAttachment($file);
+            endif;
+            //Helper::pr($mailLibrary);
+            return $mailLibrary->send();
+        } catch (\Throwable $exception) {
+            report($exception);
+            return false;
+        }
     }
     // single file upload
     public function upload_single_file($fieldName, $fileName, $uploadedpath, $uploadType, $tempFile = '')
@@ -222,9 +233,12 @@ class Controller extends BaseController
         $data['user']               = [];
         $data['title']              = $title.' :: '.$data['generalSetting']->site_name;
         $data['page_header']        = $title;
+        $data['home_page']          = $data['home_page'] ?? HomePage::where('status', '=', 1)->where('id', '=', 1)->first();
         $user_id                    = session('user_id');
         $data['user']               = User::find($user_id);
         $data['parentCats']         = Category::select('id', 'category_name', 'slug')->where('status', '=', 1)->where('parent_id', '=', 0)->get();
+        $data['childCats']          = Category::select('id', 'parent_id', 'category_name', 'slug')->where('status', '=', 1)->where('parent_id', '>', 0)->get()->groupBy('parent_id');
+        $data['cartItemCount']      = $this->frontCartItemCount();
         $data['head']               = view('front.elements.head', $data);
         $data['header']             = view('front.elements.header', $data);
         $data['footer']             = view('front.elements.footer', $data);
@@ -238,10 +252,13 @@ class Controller extends BaseController
         $data['generalSetting']     = GeneralSetting::find('1');
         $data['title']              = $title.' :: '.$data['generalSetting']->site_name;
         $data['page_header']        = $title;
+        $data['home_page']          = $data['home_page'] ?? HomePage::where('status', '=', 1)->where('id', '=', 1)->first();
         $user_id                    = session('user_id');
         $data['user']               = User::find($user_id);
         $data['content']            = HomePage::where('status', '=', 1)->first();
         $data['parentCats']         = Category::select('id', 'category_name', 'slug')->where('status', '=', 1)->where('parent_id', '=', 0)->get();
+        $data['childCats']          = Category::select('id', 'parent_id', 'category_name', 'slug')->where('status', '=', 1)->where('parent_id', '>', 0)->get()->groupBy('parent_id');
+        $data['cartItemCount']      = $this->frontCartItemCount();
         $data['head']               = view('front.elements.head', $data);
         $data['header']             = view('front.elements.header', $data);
         $data['sidebar']            = view('front.elements.sidebar', $data);
@@ -249,6 +266,22 @@ class Controller extends BaseController
         $data['maincontent']        = view('front.pages.user.'.$page_name, $data);
         $data['cat']                = [];
         return view('front.layout-after-login', $data);
+    }
+    protected function frontDeviceId()
+    {
+        $request = request();
+        $fingerprint = $request->header('User-Agent', 'unknown')
+            . $request->header('Accept-Language', 'en')
+            . $request->ip();
+
+        return md5($fingerprint);
+    }
+    protected function frontCartItemCount()
+    {
+        return OrderDetail::where('cust_device_id', '=', $this->frontDeviceId())
+            ->where('is_cart', '=', 1)
+            ->where('status', '=', 0)
+            ->sum('qty');
     }
     // admin authentication layout
     public function admin_before_login_layout($title, $page_name, $data)

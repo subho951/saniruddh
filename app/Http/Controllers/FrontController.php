@@ -19,6 +19,8 @@ use App\Models\EmailLog;
 use App\Models\Page;
 use App\Models\Testimonial;
 use App\Models\Banner;
+use App\Models\Blog;
+use App\Models\BlogCategory;
 use App\Models\HomePage;
 use App\Models\HomePage2Section;
 use App\Models\Product;
@@ -39,7 +41,6 @@ use App\Models\CancelOrderReason;
 use App\Models\ProductVariation;
 use App\Models\VariationAttribute;
 use App\Models\UserWishlist;
-use App\Models\UserReview;
 use App\Models\UserView;
 use App\Services\Schema\ProductSchemaService;
 
@@ -59,16 +60,17 @@ class FrontController extends Controller
     /* home */
     public function home(Request $request)
     {
-        echo 'Saniruddh';die;
-        if(session('shipping_country') == ''){
-            $request->session()->put('shipping_country', 'United States');
-        }        
+        $request->session()->put('shipping_country', 'India');
 
         $data['banners1']                   = Banner::where('status', '=', 1)->where('section', '=', 1)->orderBy('id', 'DESC')->get();
         $data['banners2']                   = Banner::where('status', '=', 1)->where('section', '=', 2)->orderBy('id', 'DESC')->get();
         $data['sections2']                  = HomePage2Section::where('status', '=', 1)->where('section', '=', 3)->orderBy('id', 'ASC')->get();
         $data['home_page']                  = HomePage::where('status', '=', 1)->where('id', '=', 1)->first();
-        $data['products']                   = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->orderBy('id', 'DESC')->limit(5)->get();
+        $data['featuredProducts']           = Product::select('id', 'main_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('is_feature', '=', 1)->orderBy('id', 'DESC')->limit(8)->get();
+        $data['products']                   = Product::select('id', 'main_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('is_new', '=', 1)->orderBy('id', 'DESC')->limit(8)->get();
+        $data['categoriesById']             = Category::where('status', '=', 1)->pluck('category_name', 'id');
+        $data['categorySlugsById']          = Category::where('status', '=', 1)->pluck('slug', 'id');
+        $data['blogs']                      = Blog::with('category')->where('status', '=', 1)->orderBy('publish_date', 'DESC')->orderBy('id', 'DESC')->limit(3)->get();
         $data['sections5']                  = HomePage2Section::where('status', '=', 1)->where('section', '=', 5)->orderBy('id', 'ASC')->get();
         // Helper::pr($data['sections5']);
 
@@ -80,13 +82,13 @@ class FrontController extends Controller
     /* category */
     public function category(Request $request, $slug)
     {
-        $data['getCategory']            = Category::where('slug', '=', $slug)->first();
+        $data['getCategory']            = Category::where('slug', '=', $slug)->where('status', '=', 1)->firstOrFail();
         $parent_id                      = (($data['getCategory']) ? $data['getCategory']->id : 0);
         $data['subcategory']            = Category::where('parent_id', '=', $parent_id)->where('status', '=', 1)->get();
 
         // $data['products']               = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->orderBy('id', 'DESC')->get();
         $data['productCount']           = Product::where('status', '=', 1)->where('main_category', '=', $parent_id)->orderBy('id', 'DESC')->count();
-        $data['products']               = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->orderBy('id', 'DESC')->paginate(12);
+        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->orderBy('id', 'DESC')->paginate(12);
 
         $data['cat']                    = $data['getCategory'];
 
@@ -101,7 +103,7 @@ class FrontController extends Controller
             $request->merge(['page' => 1]);
             
             $subcat = implode(',',$postData['subcat']);
-            $data['products'] = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')
+            $data['products'] = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')
                                         ->whereIn('sub_category', $postData['subcat']) // correct
                                         ->where('main_category', $parent_id)
                                         ->where('status', 1)
@@ -128,15 +130,15 @@ class FrontController extends Controller
     {
         $data['slug1']                   = $slug1;
         $data['slug2']                   = $slug2;
-        $data['getCategory']            = Category::where('slug', '=', $slug1)->first();
+        $data['getCategory']            = Category::where('slug', '=', $slug1)->where('status', '=', 1)->firstOrFail();
         $parent_id                      = (($data['getCategory']) ? $data['getCategory']->id : 0);
 
-        $data['subcategory']            = Category::where('slug', '=', $slug2)->first();
+        $data['subcategory']            = Category::where('slug', '=', $slug2)->where('parent_id', '=', $parent_id)->where('status', '=', 1)->firstOrFail();
         $child_id                       = (($data['subcategory']) ? $data['subcategory']->id : 0);
 
         // $data['products']               = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->where('sub_category', '=', $child_id)->orderBy('id', 'DESC')->get();
         $data['productCount']           = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->where('sub_category', '=', $child_id)->orderBy('id', 'DESC')->count();
-        $data['products']               = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->where('sub_category', '=', $child_id)->orderBy('id', 'DESC')->paginate(9);
+        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->where('sub_category', '=', $child_id)->orderBy('id', 'DESC')->paginate(9);
 
         $data['parent_id']              = $parent_id;
         $data['child_id']               = $child_id;
@@ -144,6 +146,7 @@ class FrontController extends Controller
         $data['maxPrice']               = Product::where('status', '=', 1)->where('sub_category', '=', $child_id)->max('discounted_price');
         $data['filter_by']              = '';
         $data['category_filter']        = [];
+        $data['filterAttributes']       = $this->catalogFilterAttributes($parent_id, $child_id);
 
         $data['cat']                    = $data['subcategory'];
 
@@ -176,7 +179,7 @@ class FrontController extends Controller
             $getProducts = [];
             if (!empty($productIds)) {
                 foreach ($productIds as $productId) {
-                    $getSingleProduct   = Product::select('id', 'name', 'slug', 'cover_image', 'short_description', 'base_price')->where('id', '=', $productId->product_id)->first();
+                    $getSingleProduct   = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'cover_image', 'short_description', 'base_price', 'discounted_price')->where('id', '=', $productId->product_id)->first();
                     if ($getSingleProduct) {
                         if (($getSingleProduct->base_price >= $min_price) && ($getSingleProduct->base_price <= $max_price)) {
                             $getProducts[]        = $getSingleProduct;
@@ -198,7 +201,7 @@ class FrontController extends Controller
         $postData                       = $request->all();
         $filter_by                      = $request->filter_by;
         if ($filter_by == '') {
-            return redirect(url('sub-category/' . $slug . '/' . $id));
+            return redirect(url('products/' . $slug));
         }
         $filter_by_array                = explode('-', $filter_by);
         $sort_field                     = $filter_by_array[0];
@@ -213,12 +216,16 @@ class FrontController extends Controller
         $data['slug']                   = $slug;
         $data['id']                     = $id;
         $data['getCategory']            = Category::where('id', '=', $id)->first();
-        $data['getProducts']            = Product::select('id', 'name', 'slug', 'cover_image', 'short_description', 'base_price')->where('status', '=', 1)->where('sub_category', '=', $id)->orderBy($orderField, $orderType)->get();
+        $data['subcategory']            = $data['getCategory'];
+        $data['getProducts']            = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'cover_image', 'short_description', 'base_price', 'discounted_price')->where('status', '=', 1)->where('sub_category', '=', $id)->orderBy($orderField, $orderType)->get();
         $data['minPrice']               = Product::where('status', '=', 1)->where('sub_category', '=', $id)->min('base_price');
         $data['maxPrice']               = Product::where('status', '=', 1)->where('sub_category', '=', $id)->max('base_price');
         $data['parent_id']              = $data['getCategory']->parent_id;
         $data['child_id']               = $data['getCategory']->id;
+        $data['slug1']                   = Category::where('id', '=', $data['parent_id'])->value('slug');
+        $data['slug2']                   = $data['getCategory']->slug;
         $data['category_filter']        = [];
+        $data['filterAttributes']       = $this->catalogFilterAttributes($data['parent_id'], $data['child_id']);
         $data['cat']                    = $data['getCategory'];
 
         $title                          = (($data['getCategory']) ? $data['getCategory']->category_name : "Parent Category");
@@ -231,14 +238,13 @@ class FrontController extends Controller
     {
         $id                             = Helper::decoded($id);
         $data['slug']                   = $slug;
-        $data['product']                = Product::where('id', '=', $id)->first();
+        $data['product']                = Product::where('id', '=', $id)->where('slug', '=', $slug)->where('status', '=', 1)->firstOrFail();
         $data['product_id']             = $id;
         $data['product_slug']           = $slug;
         $data['product_images']         = ProductImage::select('image')->where('product_id', '=', $id)->get();
 
-        $data['reviewCount']            = UserReview::where('product_id', '=', $id)->where('status', '=', 1)->count();
-        $data['reviewSum']              = UserReview::where('product_id', '=', $id)->where('status', '=', 1)->sum('rating');
-        $data['avgRating']              = (($data['reviewCount'] > 0) ? ($data['reviewSum'] / $data['reviewCount']) : 0);
+        $data['productCategory']        = Category::where('id', '=', $data['product']->main_category)->first();
+        $data['productSubcategory']     = Category::where('id', '=', $data['product']->sub_category)->first();
 
         if($data['product']){
             if($data['product']->meta_title != ''){
@@ -313,45 +319,6 @@ class FrontController extends Controller
         // Helper::pr($data['variations']);
         // variation
 
-        if ($request->isMethod('post')) {
-            $postData       = $request->all();
-            $fields         = [
-                'user_id'       => $postData['user_id'],
-                'product_id'    => $postData['product_id'],
-                'name'          => $postData['name'],
-                'email'         => $postData['email'],
-                'rating'        => $postData['rating'],
-                'title'         => $postData['title'],
-                'comment'       => $postData['comment'],
-            ];
-            // Helper::pr($fields);
-            UserReview::insert($fields);
-            $uId                                = $postData['user_id'];
-            $getUser                            = User::where('id', '=', $uId)->first();
-            $product_id                         = $postData['product_id'];
-            $getProduct                         = Product::where('id', '=', $product_id)->first();
-            /* email functionality */
-                $mailData['getProduct']     = $getProduct;
-                $mailData['getReview']      = $fields;
-                $mailData['mailHeader']     = 'Review successfully submitted on ' . $mailData['getProduct']->name;
-                $message                    = view('email-templates.review-submit', $mailData);
-                $generalSetting             = GeneralSetting::find('1');
-                $subject                    = $generalSetting->site_name . ' :: Review successfully submitted on ' . $mailData['getProduct']->name;
-                $this->sendMail($generalSetting->system_email, $subject, $message);
-            /* email functionality */
-            /* email log save */
-                $postData2 = [
-                    'name'                  => $getUser->first_name . ' ' . $getUser->last_name,
-                    'email'                 => $getUser->email,
-                    'subject'               => $subject,
-                    'message'               => $message
-                ];
-                EmailLog::insertGetId($postData2);
-            /* email log save */
-            $currentUrl = url('product/'.(($getProduct)?$getProduct->slug:'').'/' . Helper::encoded($postData['product_id']));
-            return redirect($currentUrl)->with('success_message', 'Product Review Submitted Successfully. Wait For Admin Approval !!!');
-        }
-
         /* similar products */
         $sub_category           = (($data['product']) ? $data['product']->sub_category : '');
         $sqlQuery               = "SELECT id FROM products WHERE status = 1 AND id!=$id AND sub_category = '$sub_category' ORDER BY rand() LIMIT 5";
@@ -360,9 +327,6 @@ class FrontController extends Controller
         if ($getSimilarProductIds) {
             foreach ($getSimilarProductIds as $getProductId) {
                 $getProduct     = Product::where('id', '=', $getProductId->id)->first();
-                $reviewCount    = UserReview::where('product_id', '=', $getProductId->id)->where('status', '=', 1)->count();
-                $reviewSum      = UserReview::where('product_id', '=', $getProductId->id)->where('status', '=', 1)->sum('rating');
-                $avgRating      = (($reviewCount > 0) ? ($reviewSum / $reviewCount) : 0);
                 $similarProducts[]  = [
                     'id'            => $getProductId->id,
                     'slug'          => (($getProduct) ? $getProduct->slug : ''),
@@ -371,8 +335,6 @@ class FrontController extends Controller
                     // 'markup_price'  => (($getProduct)?$getProduct->markup_price:''),
                     // 'short_description'  => (($getProduct)?$getProduct->short_description:''),
                     'cover_image'   => (($getProduct) ? $getProduct->cover_image : ''),
-                    'review_count'  => $reviewCount,
-                    'avg_rating'    => $avgRating,
                 ];
             }
         }
@@ -453,9 +415,12 @@ class FrontController extends Controller
     public function makeWishlist($pro_id)
     {
         $uId                                = session('user_id');
+        if ($uId == '') {
+            return redirect(url('signin'))->with('error_message', 'Please sign in to manage your wishlist.');
+        }
         $getUser                            = User::where('id', '=', $uId)->first();
         $product_id                         = Helper::decoded($pro_id);
-        $getProduct                         = Product::where('id', '=', $product_id)->first();
+        $getProduct                         = Product::where('id', '=', $product_id)->where('status', '=', 1)->firstOrFail();
 
         $checkWishlist                      = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product_id)->count();
         if ($checkWishlist) {
@@ -513,6 +478,7 @@ class FrontController extends Controller
     /* add to cart & order place */
     public function addToCart(Request $request)
     {
+        $request->session()->put('shipping_country', 'India');
         if ($request->isMethod('post')) {
             $postData                                   = $request->all();
             $generalSetting                             = GeneralSetting::find('1');
@@ -524,9 +490,8 @@ class FrontController extends Controller
             $international_shipping_single_item         = $generalSetting->international_shipping_single_item;
             $international_shipping_multiple_item       = $generalSetting->international_shipping_multiple_item;
 
-            $product_id                                 = $postData['product_id'];
-            $product_qty                                = $postData['product_qty'];
-            $product_rate                               = $postData['product_price'];
+            $product_id                                 = (int) $postData['product_id'];
+            $product_qty                                = (int) $postData['product_qty'];
             // $attr_id                                    = $postData['attr_id'];
             $variationsArray                            = ((array_key_exists("variations", $postData)) ? $postData['variations'] : []);
 
@@ -537,6 +502,10 @@ class FrontController extends Controller
                 ->where('products.id', '=', $product_id)
                 ->first();
             if ($getProduct) {
+                if ($product_qty < 1 || $product_qty > $getProduct->product_qty) {
+                    return redirect()->back()->with('error_message', 'Please select a valid product quantity.');
+                }
+
                 $generalSetting             = GeneralSetting::find('1');
 
                 $parent_id                  = [];
@@ -563,15 +532,23 @@ class FrontController extends Controller
                     }
                     $variationCount = count($variationsArray);
                     $productVariationIds = DB::table('variation_attributes')
+                        ->where('product_id', '=', $product_id)
                         ->whereIn('attribute_id', $variationsArray) // Match the attribute IDs
                         ->select('product_variation_id')
                         ->groupBy('product_variation_id') // Group by product_variation_id
                         ->havingRaw('COUNT(DISTINCT attribute_id) = ' . $variationCount) // Ensure both attribute_ids exist
                         ->pluck('product_variation_id'); // Get the product_variation_ids
                     // Helper::pr($productVariationIds);
+                    $selectedVariation = ProductVariation::where('product_id', '=', $product_id)
+                        ->whereIn('id', $productVariationIds)
+                        ->orderBy('price', 'ASC')
+                        ->first();
+                    if (! $selectedVariation) {
+                        return redirect()->back()->with('error_message', 'Please select a valid product variation.');
+                    }
                     $variation_name     = implode(', ', $attrName);
-                    $variation_id       = (($productVariationIds) ? $productVariationIds[0] : 0);
-                    $product_price      = $product_rate;
+                    $variation_id       = $selectedVariation->id;
+                    $product_price      = $selectedVariation->price;
                 } else {
                     $checkProductVariation = ProductVariation::where('product_id', '=', $product_id)->orderBy('price', 'asc')->first();
                     if ($checkProductVariation) {
@@ -587,7 +564,7 @@ class FrontController extends Controller
                     } else {
                         $variation_name     = '';
                         $variation_id       = 0;
-                        $product_price      = $product_rate;
+                        $product_price      = $getProduct->discounted_price;
                     }
                 }
                 /* variation add */
@@ -666,7 +643,7 @@ class FrontController extends Controller
 
                             $country = session('shipping_country');
                             if ($country != '') {
-                                if ($country != 'United States') {
+                                if ($country != 'India') {
                                     if ($cartItemCount > 1) {
                                         $shipping_rate = $international_shipping_multiple_item;
                                     } else {
@@ -695,8 +672,8 @@ class FrontController extends Controller
                             OrderDetail::where('id', '=', $cart_id)->update($updateCartData);
                         }
 
-                        // check cart value over 999 or not the in USA free shipping
-                            if($country == 'United States'){
+                        // Apply the domestic free-shipping threshold for India.
+                            if($country == 'India'){
                                 $cartValue          = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->sum('net_amt');
                                 // echo $cartValue;die;
                                 if($cartValue > $generalSetting->domestic_free_shipping_min_amount){
@@ -716,7 +693,7 @@ class FrontController extends Controller
                                     }
                                 }
                             }
-                        // check cart value over 999 or not the in USA free shipping
+                        // Apply the domestic free-shipping threshold for India.
                     }
                 /* update all cart due to multiple items */
                 return redirect(url('cart'))->with('success_message', $msg);
@@ -728,17 +705,21 @@ class FrontController extends Controller
     }
     public function createDeviceFingerprint()
     {
-        $userAgent          = $_SERVER['HTTP_USER_AGENT'];
-        $acceptLanguage     = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
-        $ipAddress          = $_SERVER['REMOTE_ADDR'];
+        $userAgent          = request()->header('User-Agent', 'unknown');
+        $acceptLanguage     = request()->header('Accept-Language', 'en');
+        $ipAddress          = request()->ip();
         $fingerprint        = $userAgent . $acceptLanguage . $ipAddress;
         return md5($fingerprint);
     }
     public function cart(Request $request)
     {
+        $request->session()->put('shipping_country', 'India');
         $deviceId                       = $this->createDeviceFingerprint();
+        $this->recalculateIndiaShippingCart($deviceId);
         $data['deviceId']               = $deviceId;
         $data['cartItems']              = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->get();
+        $data['cartProducts']           = $this->productsForItems($data['cartItems']);
+        $data['cartTotals']             = $this->cartTotals($data['cartItems']);
         if ($request->isMethod('post')) {
             $generalSetting                             = GeneralSetting::find('1');
             $domestic_free_shipping_min_amount          = $generalSetting->domestic_free_shipping_min_amount;
@@ -783,7 +764,7 @@ class FrontController extends Controller
 
                                                 $country = session('shipping_country');
                                                 if ($country != '') {
-                                                    if ($country != 'United States') {
+                                                    if ($country != 'India') {
                                                         if ($cartItemCount > 1) {
                                                             $shipping_rate = $international_shipping_multiple_item;
                                                         } else {
@@ -843,7 +824,7 @@ class FrontController extends Controller
 
                                                         $country = session('shipping_country');
                                                         if ($country != '') {
-                                                            if ($country != 'United States') {
+                                                            if ($country != 'India') {
                                                                 if ($cartItemCount > 1) {
                                                                     $shipping_rate = $international_shipping_multiple_item;
                                                                 } else {
@@ -905,7 +886,7 @@ class FrontController extends Controller
                 }
             }
             if ($postData['mode'] == 'shipping') {
-                $s_country = $postData['s_country'];
+                $s_country = 'India';
                 $request->session()->put('shipping_country', $s_country);
                 $country = session('shipping_country');
 
@@ -920,7 +901,7 @@ class FrontController extends Controller
                             $product_qty = $cartItem->qty;
 
                             if ($country != '') {
-                                if ($country != 'United States') {
+                                if ($country != 'India') {
                                     if ($cartItemCount > 1) {
                                         $shipping_rate = $international_shipping_multiple_item;
                                     } else {
@@ -949,8 +930,8 @@ class FrontController extends Controller
                             OrderDetail::where('id', '=', $cart_id)->update($updateCartData);
                         }
 
-                        // check cart value over 999 or not the in USA free shipping
-                            if($country == 'United States'){
+                        // Apply the domestic free-shipping threshold for India.
+                            if($country == 'India'){
                                 $cartValue          = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->sum('net_amt');
                                 // echo $cartValue;die;
                                 if($cartValue > $generalSetting->domestic_free_shipping_min_amount){
@@ -970,7 +951,7 @@ class FrontController extends Controller
                                     }
                                 }
                             }
-                        // check cart value over 999 or not the in USA free shipping
+                        // Apply the domestic free-shipping threshold for India.
                     }
                     
                 /* update all cart due to multiple items */
@@ -978,7 +959,7 @@ class FrontController extends Controller
             }
         }
 
-        $data['countries']              = Country::select('id', 'name')->where('status', '=', 1)->where('id', '=', 231)->orderBy('name', 'ASC')->get();
+        $data['countries']              = Country::select('id', 'name')->where('status', '=', 1)->where('name', '=', 'India')->get();
         $title                          = 'Cart';
         $page_name                      = 'cart';
         echo $this->front_before_login_layout($title, $page_name, $data);
@@ -1007,7 +988,7 @@ class FrontController extends Controller
 
                 $country = session('shipping_country');
                 if ($country != '') {
-                    if ($country != 'United States') {
+                    if ($country != 'India') {
                         if ($cartItemCount > 1) {
                             $shipping_rate = $international_shipping_multiple_item;
                         } else {
@@ -1062,7 +1043,11 @@ class FrontController extends Controller
         $country = session('shipping_country');
 
         $id = Helper::decoded($id);
-        OrderDetail::where('id', '=', $id)->delete();
+        OrderDetail::where('id', '=', $id)
+            ->where('cust_device_id', '=', $deviceId)
+            ->where('is_cart', '=', 1)
+            ->where('status', '=', 0)
+            ->delete();
 
         /* update all cart due to multiple items */
             $cartItemCount          = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->sum('qty');
@@ -1075,7 +1060,7 @@ class FrontController extends Controller
                     $product_qty        = $cartItem->qty;
 
                     if ($country != '') {
-                        if ($country != 'United States') {
+                        if ($country != 'India') {
                             if ($cartItemCount > 1) {
                                 $shipping_rate = $international_shipping_multiple_item;
                             } else {
@@ -1104,8 +1089,8 @@ class FrontController extends Controller
                     OrderDetail::where('id', '=', $cart_id)->update($updateCartData);
                 }
 
-                // check cart value over 999 or not the in USA free shipping
-                    if($country == 'United States'){
+                // Apply the domestic free-shipping threshold for India.
+                    if($country == 'India'){
                         $cartValue          = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->sum('net_amt');
                         // echo $cartValue;die;
                         if($cartValue > $generalSetting->domestic_free_shipping_min_amount){
@@ -1125,17 +1110,27 @@ class FrontController extends Controller
                             }
                         }
                     }
-                // check cart value over 999 or not the in USA free shipping
+                // Apply the domestic free-shipping threshold for India.
             }
         /* update all cart due to multiple items */
         return redirect(url('cart'))->with('success_message', 'Cart Item Removed Successfully !!!');
     }
     public function updateCartItem(Request $request, $id)
     {
+        $request->session()->put('shipping_country', 'India');
         $postData       = $request->all();
         $id             = Helper::decoded($id);
-        $checkProductInCart = OrderDetail::where('id', '=', $id)->first();
         $deviceId                       = $this->createDeviceFingerprint();
+        $checkProductInCart = OrderDetail::where('id', '=', $id)
+            ->where('cust_device_id', '=', $deviceId)
+            ->where('is_cart', '=', 1)
+            ->where('status', '=', 0)
+            ->firstOrFail();
+        $productStock = Product::where('id', '=', $checkProductInCart->product_id)->value('product_qty');
+        $quantity = filter_var($postData['qty'] ?? null, FILTER_VALIDATE_INT);
+        if ($quantity === false || $quantity < 1 || $quantity > $productStock) {
+            return redirect(url('cart'))->with('error_message', 'Please select a valid product quantity.');
+        }
 
         $generalSetting                             = GeneralSetting::find('1');
         $tax_percent                                = $generalSetting->tax_percent;
@@ -1146,13 +1141,13 @@ class FrontController extends Controller
         $international_shipping_multiple_item       = $generalSetting->international_shipping_multiple_item;        
 
         $shipping_amt               = 0;
-        $total                      = ($checkProductInCart->rate * $postData['qty']);
+        $total                      = ($checkProductInCart->rate * $quantity);
         $tax_amt                    = (($total * $tax_percent) / 100);
         $net_amt                    = ($total + $shipping_amt + $tax_amt);
 
         $net_amt        = ($total + $shipping_amt + $tax_amt);
         $fields = [
-            'qty'               => $postData['qty'],
+            'qty'               => $quantity,
             'total'             => $total,
             'subtotal'          => $total,
             'amount_after_disc' => $total,
@@ -1161,7 +1156,11 @@ class FrontController extends Controller
             'net_amt'           => $net_amt,
             'is_cart'           => 1,
         ];
-        OrderDetail::where('id', '=', $id)->update($fields);
+        OrderDetail::where('id', '=', $id)
+            ->where('cust_device_id', '=', $deviceId)
+            ->where('is_cart', '=', 1)
+            ->where('status', '=', 0)
+            ->update($fields);
 
         /* update all cart due to multiple items */
             $cartItemCount          = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->sum('qty');
@@ -1174,7 +1173,7 @@ class FrontController extends Controller
                     $product_qty = $cartItem->qty;
 
                     if ($country != '') {
-                        if ($country != 'United States') {
+                        if ($country != 'India') {
                             if ($cartItemCount > 1) {
                                 $shipping_rate = $international_shipping_multiple_item;
                             } else {
@@ -1202,8 +1201,8 @@ class FrontController extends Controller
                     ];
                     OrderDetail::where('id', '=', $cart_id)->update($updateCartData);
                 }
-                // check cart value over 999 or not the in USA free shipping
-                    if($country == 'United States'){
+                // Apply the domestic free-shipping threshold for India.
+                    if($country == 'India'){
                         $cartValue          = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->sum('net_amt');
                         // echo $cartValue;die;
                         if($cartValue > $generalSetting->domestic_free_shipping_min_amount){
@@ -1223,21 +1222,102 @@ class FrontController extends Controller
                             }
                         }
                     }
-                // check cart value over 999 or not the in USA free shipping
+                // Apply the domestic free-shipping threshold for India.
             }
             
         /* update all cart due to multiple items */
         return redirect(url('cart'))->with('success_message', 'Cart Item Updated Successfully !!!');
     }
+    public function updateCart(Request $request)
+    {
+        $request->session()->put('shipping_country', 'India');
+        $deviceId = $this->createDeviceFingerprint();
+        $cartItems = OrderDetail::where('cust_device_id', '=', $deviceId)
+            ->where('is_cart', '=', 1)
+            ->where('status', '=', 0)
+            ->get();
+        $quantities = $request->input('quantities', []);
+
+        if ($cartItems->isEmpty()) {
+            return redirect(url('cart'))->with('error_message', 'Your cart is empty.');
+        }
+
+        if (! is_array($quantities)) {
+            return redirect(url('cart'))->with('error_message', 'Please select valid product quantities.');
+        }
+
+        $productStocks = Product::whereIn('id', $cartItems->pluck('product_id'))->pluck('product_qty', 'id');
+        $validQuantities = [];
+        foreach ($cartItems as $cartItem) {
+            $quantity = filter_var($quantities[$cartItem->id] ?? null, FILTER_VALIDATE_INT);
+            $productStock = (int) ($productStocks[$cartItem->product_id] ?? 0);
+            if ($quantity === false || $quantity < 1 || $quantity > $productStock) {
+                return redirect(url('cart'))->with('error_message', 'Please select valid product quantities.');
+            }
+            $validQuantities[$cartItem->id] = $quantity;
+        }
+
+        $taxPercent = GeneralSetting::findOrFail('1')->tax_percent;
+        DB::transaction(function () use ($cartItems, $validQuantities, $taxPercent, $deviceId) {
+            foreach ($cartItems as $cartItem) {
+                $quantity = $validQuantities[$cartItem->id];
+                $total = $cartItem->rate * $quantity;
+                $taxAmount = ($total * $taxPercent) / 100;
+                OrderDetail::where('id', '=', $cartItem->id)
+                    ->where('cust_device_id', '=', $deviceId)
+                    ->where('is_cart', '=', 1)
+                    ->where('status', '=', 0)
+                    ->update([
+                        'qty' => $quantity,
+                        'total' => $total,
+                        'subtotal' => $total,
+                        'coupon_code' => '',
+                        'disc_type' => null,
+                        'disc_amount' => 0,
+                        'amount_after_disc' => $total,
+                        'shipping_amt' => 0,
+                        'tax_amt' => $taxAmount,
+                        'net_amt' => $total + $taxAmount,
+                        'is_cart' => 1,
+                    ]);
+            }
+        });
+
+        $request->session()->forget(['is_coupon', 'sess_coupon_code', 'sess_disc_type']);
+        $this->recalculateIndiaShippingCart($deviceId);
+
+        return redirect(url('cart'))->with('success_message', 'Cart Updated Successfully !!!');
+    }
+    public function clearCart(Request $request)
+    {
+        $deviceId = $this->createDeviceFingerprint();
+        $deletedItems = OrderDetail::where('cust_device_id', '=', $deviceId)
+            ->where('is_cart', '=', 1)
+            ->where('status', '=', 0)
+            ->delete();
+        $request->session()->forget(['is_coupon', 'sess_coupon_code', 'sess_disc_type']);
+
+        return redirect(url('cart'))->with(
+            $deletedItems ? 'success_message' : 'error_message',
+            $deletedItems ? 'Cart Cleared Successfully !!!' : 'Your cart is already empty.'
+        );
+    }
     public function checkout(Request $request)
     {
+        $request->session()->put('shipping_country', 'India');
         $deviceId                       = $this->createDeviceFingerprint();
+        $this->recalculateIndiaShippingCart($deviceId);
         $data['deviceId']               = $deviceId;
         $data['cartItems']              = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->get();
-        $data['countries']              = Country::select('id', 'name')->where('status', '=', 1)->orderBy('name', 'ASC')->get();
+        if ($data['cartItems']->isEmpty()) {
+            return redirect(url('cart'))->with('error_message', 'Your cart is empty.');
+        }
+        $data['cartProducts']           = $this->productsForItems($data['cartItems']);
+        $data['cartTotals']             = $this->cartTotals($data['cartItems']);
+        $data['countries']              = Country::select('id', 'name')->where('status', '=', 1)->where('name', '=', 'India')->get();
         $uId                            = session('user_id');
-        $data['getBillingAddrs']        = UserLocation::where('user_id', '=', $uId)->where('type', '=', 'BILLING')->where('status', '=', 1)->get();
-        $data['getShippingAddrs']       = UserLocation::where('user_id', '=', $uId)->where('type', '=', 'SHIPPING')->where('status', '=', 1)->get();
+        $data['getBillingAddrs']        = UserLocation::where('user_id', '=', $uId)->where('type', '=', 'BILLING')->where('country', '=', 'India')->where('status', '=', 1)->get();
+        $data['getShippingAddrs']       = UserLocation::where('user_id', '=', $uId)->where('type', '=', 'SHIPPING')->where('country', '=', 'India')->where('status', '=', 1)->get();
 
         if ($request->isMethod('post')) {
             $postData = $request->all();
@@ -1257,7 +1337,7 @@ class FrontController extends Controller
                         'type'          => $request->type,
                         'title'         => $request->title,
                         'address'       => $request->address,
-                        'country'       => $request->country,
+                        'country'       => 'India',
                         'state'         => $request->state,
                         'city'          => $request->city,
                         'locality'      => $request->locality,
@@ -1282,7 +1362,9 @@ class FrontController extends Controller
     }
     public function placeOrder(Request $request, AuthorizeNetService $authorizeNet)
     {
+        $request->session()->put('shipping_country', 'India');
         $deviceId       = $this->createDeviceFingerprint();
+        $this->recalculateIndiaShippingCart($deviceId);
         $postData       = $request->all();
         $order_id       = 0;
         // Helper::pr($postData);
@@ -1290,6 +1372,21 @@ class FrontController extends Controller
         if (($postData['mode'] ?? '') == 'order') {
             $uId                            = session('user_id');
             $selectedPaymentMethod          = $postData['payment_method'] ?? '';
+            $checkoutType                   = $postData['checkout_type'] ?? 'GUEST';
+            $cartItems                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->get();
+
+            if ($cartItems->isEmpty()) {
+                return redirect(url('cart'))->with('error_message', 'Your cart is empty.');
+            }
+
+            if (! in_array($selectedPaymentMethod, ['COD', 'STRIPE', 'PAYPAL', 'AUTHORIZE.NET'])) {
+                return redirect(url('checkout'))->with('error_message', 'Invalid payment method selected.');
+            }
+
+            if ($checkoutType == 'EXISTING' && $uId == '') {
+                return redirect(url('checkout'))->with('error_message', 'Please sign in to use a saved address.');
+            }
+
             $getLastEnquiry                 = Order::orderBy('id', 'DESC')->first();
             if ($getLastEnquiry) {
                 $sl_no              = $getLastEnquiry->sl_no;
@@ -1301,8 +1398,6 @@ class FrontController extends Controller
                 $next_sl_no_string  = str_pad($next_sl_no, 7, 0, STR_PAD_LEFT);
                 $order_no           = 'TCG-' . $next_sl_no_string;
             }
-            $payment_method = 'CARD';
-
             $getShippingAddr = [];
             $getCustomer    = User::where('id', '=', $uId)->first();
             // if (array_key_exists("billing", $postData)) {
@@ -1315,12 +1410,15 @@ class FrontController extends Controller
             //     $getShippingAddr = UserLocation::where('id', '=', $postData['shipping'])->first();
             // }
 
-            if($postData['checkout_type'] == 'EXISTING'){
+            if($checkoutType == 'EXISTING'){
                 $getShippingAddr = [];
                 $getCustomer    = User::where('id', '=', $uId)->first();
                 if (array_key_exists("billing",$postData) && array_key_exists("shipping",$postData)){
-                    $getBillingAddr = UserLocation::where('id', '=', $postData['billing'])->first();
-                    $getShippingAddr = UserLocation::where('id', '=', $postData['shipping'])->first();
+                    $getBillingAddr = UserLocation::where('id', '=', $postData['billing'])->where('user_id', '=', $uId)->where('type', '=', 'BILLING')->where('country', '=', 'India')->where('status', '=', 1)->first();
+                    $getShippingAddr = UserLocation::where('id', '=', $postData['shipping'])->where('user_id', '=', $uId)->where('type', '=', 'SHIPPING')->where('country', '=', 'India')->where('status', '=', 1)->first();
+                    if (! $getBillingAddr || ! $getShippingAddr) {
+                        return redirect(url('checkout/'))->with('error_message', 'Please select valid billing and shipping addresses.');
+                    }
                 } else {
                     return redirect(url('checkout/'))->with('error_message', 'You Must Select Or Add Billing or Shipping Address For Checkout');
                 }
@@ -1347,12 +1445,37 @@ class FrontController extends Controller
                 $s_state        = (($getShippingAddr) ? $getShippingAddr->state : (($getBillingAddr) ? $getBillingAddr->state : ''));
                 $s_postcode     = (($getShippingAddr) ? $getShippingAddr->zipcode : (($getBillingAddr) ? $getBillingAddr->zipcode : ''));
             } else {
+                $guestValidator = Validator::make($postData, [
+                    'b_fname' => 'required',
+                    'b_lname' => 'required',
+                    'b_phone' => 'required',
+                    'b_email' => 'required|email',
+                    'b_country' => 'required',
+                    'b_street' => 'required',
+                    'b_suburb' => 'required',
+                    'b_state' => 'required',
+                    'b_postcode' => 'required',
+                    's_fname' => 'required',
+                    's_lname' => 'required',
+                    's_phone' => 'required',
+                    's_email' => 'required|email',
+                    's_country' => 'required',
+                    's_street' => 'required',
+                    's_suburb' => 'required',
+                    's_state' => 'required',
+                    's_postcode' => 'required',
+                ]);
+
+                if ($guestValidator->fails()) {
+                    return redirect(url('checkout'))->withErrors($guestValidator)->withInput();
+                }
+
                 $b_fname        = $postData['b_fname'];
                 $b_lname        = $postData['b_lname'];
                 $b_phone        = $postData['b_phone'];
                 $b_email        = $postData['b_email'];
                 $b_company      = $postData['b_company'];
-                $b_country      = $postData['b_country'];
+                $b_country      = 'India';
                 $b_street       = $postData['b_street'];
                 $b_suburb       = $postData['b_suburb'];
                 $b_state        = $postData['b_state'];
@@ -1362,13 +1485,14 @@ class FrontController extends Controller
                 $s_phone        = $postData['s_phone'];
                 $s_email        = $postData['s_email'];
                 $s_company      = $postData['s_company'];
-                $s_country      = $postData['s_country'];
+                $s_country      = 'India';
                 $s_street       = $postData['s_street'];
                 $s_suburb       = $postData['s_suburb'];
                 $s_state        = $postData['s_state'];
                 $s_postcode     = $postData['s_postcode'];
             }            
 
+            $orderTotals = $this->cartTotals($cartItems);
             $fields1 = [
                 'sl_no'             => $next_sl_no,
                 'order_no'          => $order_no,
@@ -1400,16 +1524,16 @@ class FrontController extends Controller
                 's_suburb'          => $s_suburb,
                 's_state'           => $s_state,
                 's_postcode'        => $s_postcode,
-                'subtotal'          => $postData['subtotal'],
+                'subtotal'          => $orderTotals['subtotal'],
                 'coupon_code'       => session('sess_coupon_code'),
                 'disc_type'         => session('sess_disc_type'),
-                'disc_amount'       => $postData['disc_amount'],
-                'amount_after_disc' => $postData['amount_after_disc'],
-                'shipping_amt'      => $postData['shipping_amt'],
-                'tax_amt'           => $postData['tax_amt'],
-                'net_amt'           => $postData['net_amt'],
+                'disc_amount'       => $orderTotals['discount'],
+                'amount_after_disc' => $orderTotals['amount_after_discount'],
+                'shipping_amt'      => $orderTotals['shipping'],
+                'tax_amt'           => $orderTotals['tax'],
+                'net_amt'           => $orderTotals['net'],
                 'payment_mode'      => $selectedPaymentMethod,
-                'checkout_type'     => $postData['checkout_type'],
+                'checkout_type'     => $checkoutType,
             ];
             // Helper::pr($fields1);die;
             $order_id = Order::insertGetId($fields1);
@@ -1421,8 +1545,12 @@ class FrontController extends Controller
                     // 'status'    => 1,
                 ];
                 // OrderDetail::where('cust_device_id', '=', $deviceId)->where('order_id', '=', 0)->where('is_cart', '=', 1)->update($fields2);
-                OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->update($fields2);
-                if ($selectedPaymentMethod == 'STRIPE') {
+                OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->update($fields2);
+                if ($selectedPaymentMethod == 'COD') {
+                    OrderDetail::where('order_id', '=', $order_id)->update(['is_cart' => 0]);
+                    $request->session()->forget(['is_coupon', 'sess_coupon_code', 'sess_disc_type']);
+                    return redirect(url('order-success/' . Helper::encoded($order_id)))->with('success_message', 'Order placed successfully. Please pay cash on delivery.');
+                } elseif ($selectedPaymentMethod == 'STRIPE') {
                     $request->session()->forget(['is_coupon', 'sess_coupon_code', 'sess_disc_type']);
                     return redirect(url('pay-by-card/' . Helper::encoded($order_id)))->with('success_message', 'Kindly Pay To Complete The Order !!!');
                 } elseif ($selectedPaymentMethod == 'PAYPAL') {
@@ -1587,6 +1715,111 @@ class FrontController extends Controller
     public function sanitizeField($value, $maxLength)
     {
         return substr($value ?? '', 0, $maxLength);
+    }
+    private function catalogFilterAttributes($parentCategoryId, $subcategoryId)
+    {
+        return Attribute::select('id', 'name')
+            ->where('parent_category', '=', $parentCategoryId)
+            ->where('sub_category_id', '=', $subcategoryId)
+            ->where('status', '=', 1)
+            ->get()
+            ->map(function ($attribute) use ($parentCategoryId, $subcategoryId) {
+                $attribute->values = AttributeValue::select('id', 'attr_value', 'ref_val')
+                    ->where('parent_category', '=', $parentCategoryId)
+                    ->where('sub_category_id', '=', $subcategoryId)
+                    ->where('attr_id', '=', $attribute->id)
+                    ->where('status', '=', 1)
+                    ->get();
+
+                return $attribute;
+            });
+    }
+    private function productsForItems($items)
+    {
+        return Product::whereIn('id', $items->pluck('product_id')->filter()->unique())->get()->keyBy('id');
+    }
+    private function cartTotals($items)
+    {
+        return [
+            'subtotal' => (float) $items->sum('subtotal'),
+            'discount' => (float) $items->sum('disc_amount'),
+            'amount_after_discount' => (float) $items->sum('amount_after_disc'),
+            'shipping' => (float) $items->sum('shipping_amt'),
+            'tax' => (float) $items->sum('tax_amt'),
+            'net' => (float) $items->sum('net_amt'),
+        ];
+    }
+    private function recalculateIndiaShippingCart($deviceId)
+    {
+        session(['shipping_country' => 'India']);
+        $generalSetting = GeneralSetting::find('1');
+        if (! $generalSetting) {
+            return;
+        }
+
+        $cartItems = OrderDetail::where('cust_device_id', '=', $deviceId)
+            ->where('is_cart', '=', 1)
+            ->where('status', '=', 0)
+            ->get();
+        $cartItemCount = $cartItems->sum('qty');
+        $shippingRate = $cartItemCount > 1
+            ? $generalSetting->domestic_shipping_multiple_item
+            : $generalSetting->domestic_shipping_single_item;
+
+        foreach ($cartItems as $cartItem) {
+            $shippingAmount = $cartItem->qty * $shippingRate;
+            OrderDetail::where('id', '=', $cartItem->id)
+                ->where('cust_device_id', '=', $deviceId)
+                ->where('is_cart', '=', 1)
+                ->where('status', '=', 0)
+                ->update([
+                    'shipping_amt' => $shippingAmount,
+                    'net_amt' => $cartItem->amount_after_disc + $shippingAmount + $cartItem->tax_amt,
+                ]);
+        }
+
+        $cartValue = OrderDetail::where('cust_device_id', '=', $deviceId)
+            ->where('is_cart', '=', 1)
+            ->where('status', '=', 0)
+            ->sum('net_amt');
+        if ($cartValue > $generalSetting->domestic_free_shipping_min_amount) {
+            foreach ($cartItems as $cartItem) {
+                OrderDetail::where('id', '=', $cartItem->id)
+                    ->where('cust_device_id', '=', $deviceId)
+                    ->where('is_cart', '=', 1)
+                    ->where('status', '=', 0)
+                    ->update([
+                        'shipping_amt' => 0,
+                        'net_amt' => $cartItem->amount_after_disc + $cartItem->tax_amt,
+                    ]);
+            }
+        }
+    }
+    private function otpEmailMessage($otp, $configuredTemplate = null)
+    {
+        if (! str_contains((string) $configuredTemplate, '{{otp')) {
+            $configuredTemplate = null;
+        }
+
+        return $this->configuredEmailMessage(
+            $configuredTemplate,
+            [
+                '{{otp1}}' => substr($otp, 0, 1),
+                '{{otp2}}' => substr($otp, 1, 1),
+                '{{otp3}}' => substr($otp, 2, 1),
+                '{{otp4}}' => substr($otp, 3, 1),
+            ],
+            'email-templates.otp',
+            ['otp' => $otp]
+        );
+    }
+    private function configuredEmailMessage($configuredTemplate, $replacements, $fallbackView, $fallbackData)
+    {
+        if (filled($configuredTemplate)) {
+            return str_replace(array_keys($replacements), array_values($replacements), $configuredTemplate);
+        }
+
+        return view($fallbackView, $fallbackData)->render();
     }
     public function payByCard(Request $request, $id)
     {
@@ -1839,8 +2072,9 @@ class FrontController extends Controller
     public function orderSuccess($id)
     {
         $id                             = Helper::decoded($id);
-        $data['getOrder']               = Order::where('id', '=', $id)->first();
+        $data['getOrder']               = Order::where('id', '=', $id)->firstOrFail();
         $data['cartItems']              = OrderDetail::where('order_id', '=', $id)->get();
+        $data['cartProducts']           = $this->productsForItems($data['cartItems']);
         $generalSetting                 = GeneralSetting::find('1');
         $title                          = 'Order Success';
         $page_name                      = 'order-success';
@@ -1849,11 +2083,24 @@ class FrontController extends Controller
     public function orderFailure($id)
     {
         $id                             = Helper::decoded($id);
-        $data['getOrder']               = Order::where('id', '=', $id)->first();
+        $data['getOrder']               = Order::where('id', '=', $id)->firstOrFail();
         $data['cartItems']              = OrderDetail::where('order_id', '=', $id)->get();
+        $data['cartProducts']           = $this->productsForItems($data['cartItems']);
         $generalSetting                 = GeneralSetting::find('1');
         $title                          = 'Order Failured';
         $page_name                      = 'order-failure';
+        echo $this->front_before_login_layout($title, $page_name, $data);
+    }
+    public function specials()
+    {
+        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')
+            ->where('status', '=', 1)
+            ->where('is_feature', '=', 1)
+            ->orderBy('id', 'DESC')
+            ->paginate(12);
+
+        $title                          = 'Featured Products';
+        $page_name                      = 'specials';
         echo $this->front_before_login_layout($title, $page_name, $data);
     }
     /* add to cart & order place */
@@ -1861,11 +2108,82 @@ class FrontController extends Controller
     public function faq()
     {
         $data['faqCats']                = FaqCategory::where('status', '=', 1)->get();
+        $data['faqsByCategory']         = Faq::where('status', '=', 1)->orderBy('rank', 'ASC')->get()->groupBy('faq_category_id');
         $title                          = 'Frequently Asked Questions';
         $page_name                      = 'faq';
         echo $this->front_before_login_layout($title, $page_name, $data);
     }
     /* faq */
+    /* blogs */
+    public function blogs(Request $request, $categorySlug = '')
+    {
+        $activeCategory = null;
+        $blogs = Blog::with('category')->where('status', '=', 1);
+
+        if ($categorySlug != '') {
+            $activeCategory = BlogCategory::where('slug', '=', $categorySlug)->where('status', '=', 1)->firstOrFail();
+            $blogs->where('blog_category_id', '=', $activeCategory->id);
+        }
+
+        if ($request->filled('q')) {
+            $searchTerm = trim($request->q);
+            $blogs->where(function ($query) use ($searchTerm) {
+                $query->where('title', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('short_description', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('long_description', 'like', '%'.$searchTerm.'%');
+            });
+        }
+
+        $data['blogs']                  = $blogs->orderBy('publish_date', 'DESC')->orderBy('id', 'DESC')->paginate(6)->withQueryString();
+        $data['activeBlogCategory']     = $activeCategory;
+        $data['searchTerm']             = trim((string) $request->q);
+        $data['metaDescription']        = (($activeCategory && $activeCategory->description) ? $activeCategory->description : 'Fashion updates and collection stories from the Saniruddh storefront.');
+        $data                           = array_merge($data, $this->blogSidebarData());
+
+        $title                          = (($activeCategory) ? $activeCategory->name.' Blogs' : 'Blogs');
+        $page_name                      = 'blogs';
+        echo $this->front_before_login_layout($title, $page_name, $data);
+    }
+
+    public function blogDetails($slug)
+    {
+        $data['blog']                   = Blog::with('category')->where('slug', '=', $slug)->where('status', '=', 1)->firstOrFail();
+        $data['relatedBlogs']           = Blog::with('category')->where('status', '=', 1)->where('id', '!=', $data['blog']->id)->where('blog_category_id', '=', $data['blog']->blog_category_id)->orderBy('publish_date', 'DESC')->orderBy('id', 'DESC')->limit(3)->get();
+
+        if ($data['relatedBlogs']->isEmpty()) {
+            $data['relatedBlogs']       = Blog::with('category')->where('status', '=', 1)->where('id', '!=', $data['blog']->id)->orderBy('publish_date', 'DESC')->orderBy('id', 'DESC')->limit(3)->get();
+        }
+
+        $data['activeBlogCategory']     = $data['blog']->category;
+        $data['metaDescription']        = $data['blog']->meta_description ?: $data['blog']->short_description;
+        $data['metaKeywords']           = $data['blog']->meta_keywords;
+        $data                           = array_merge($data, $this->blogSidebarData($data['blog']->id));
+
+        $title                          = $data['blog']->meta_title ?: $data['blog']->title;
+        $page_name                      = 'blog-details';
+        echo $this->front_before_login_layout($title, $page_name, $data);
+    }
+
+    private function blogSidebarData($excludeBlogId = 0)
+    {
+        $blogCategories = BlogCategory::withCount([
+            'blogs as active_blogs_count' => function ($query) {
+                $query->where('status', '=', 1);
+            }
+        ])->where('status', '=', 1)->orderBy('name', 'ASC')->get();
+
+        $recentBlogs = Blog::with('category')->where('status', '=', 1);
+
+        if ($excludeBlogId > 0) {
+            $recentBlogs->where('id', '!=', $excludeBlogId);
+        }
+
+        return [
+            'blogCategories' => $blogCategories,
+            'recentBlogs' => $recentBlogs->orderBy('publish_date', 'DESC')->orderBy('id', 'DESC')->limit(4)->get(),
+        ];
+    }
+    /* blogs */
     /* page */
     public function page($slug)
     {
@@ -1909,11 +2227,18 @@ class FrontController extends Controller
                 /* email sent */
                 $generalSetting             = GeneralSetting::find('1');
 
-                $message                    = str_replace("{{name}}", $fname . ' ' . $lname, $generalSetting->email_template_contactus);
-                $message1                    = str_replace("{{email}}", $email, $message);
-                $message2                    = str_replace("{{phone}}", $phone, $message1);
-                $message3                    = str_replace("{{subject}}", $subject, $message2);
-                $message4                    = str_replace("{{description}}", $msg, $message3);
+                $message4                    = $this->configuredEmailMessage(
+                    $generalSetting->email_template_contactus,
+                    [
+                        '{{name}}' => $fname . ' ' . $lname,
+                        '{{email}}' => $email,
+                        '{{phone}}' => $phone,
+                        '{{subject}}' => $subject,
+                        '{{description}}' => $msg,
+                    ],
+                    'email-templates.contact-us',
+                    $fields
+                );
                 // echo $message4;die;
                 $subject                    = $generalSetting->site_name . ' :: Contact Enquiry';
                 $this->sendMail($generalSetting->system_email, $subject, $message4);
@@ -1923,7 +2248,7 @@ class FrontController extends Controller
                     'name'                  => $fname . ' ' . $lname,
                     'email'                 => $email,
                     'subject'               => $subject,
-                    'message'               => $message
+                    'message'               => $message4
                 ];
                 EmailLog::insertGetId($postData2);
                 /* email log save */
@@ -1960,7 +2285,7 @@ class FrontController extends Controller
                     /* user activity */
                     $activityData = [
                         'user_email'        => $sessionData['email'],
-                        'user_name'         => $sessionData['name'],
+                        'user_name'         => trim($sessionData['first_name'] . ' ' . $sessionData['last_name']),
                         'user_type'         => 'USER',
                         'ip_address'        => $request->ip(),
                         'activity_type'     => 1,
@@ -2073,12 +2398,13 @@ class FrontController extends Controller
                         // Helper::pr($fields,0);
                         /* email sent */
                         $generalSetting              = GeneralSetting::find('1');
-                        $message                     = str_replace("{{otp1}}", substr($remember_token, 0, 1), $generalSetting->email_template_forgot_password);
-                        $message1                    = str_replace("{{otp2}}", substr($remember_token, 1, 1), $message);
-                        $message2                    = str_replace("{{otp3}}", substr($remember_token, 2, 1), $message1);
-                        $message3                    = str_replace("{{otp4}}", substr($remember_token, 3, 1), $message2);
+                        $message3                    = $this->otpEmailMessage($remember_token, $generalSetting->email_template_user_signup);
                         $subject                     = $generalSetting->site_name . ' :: Verify Signup OTP';
-                        $this->sendMail($email, $subject, $message3);
+                        if (! $this->sendMail($email, $subject, $message3)) {
+                            return redirect('signin')
+                                ->withInput($request->except(['password', 'confirm_password']))
+                                ->with('error_message2', 'We could not send the verification email. Please try again shortly.');
+                        }
                         /* email sent */
                         /* email log save */
                         $postData2 = [
@@ -2167,12 +2493,11 @@ class FrontController extends Controller
                     User::where('id', '=', $checkUser->id)->update($postData);
                     /* email sent */
                     $generalSetting              = GeneralSetting::find('1');
-                    $message                     = str_replace("{{otp1}}", substr($remember_token, 0, 1), $generalSetting->email_template_forgot_password);
-                    $message1                    = str_replace("{{otp2}}", substr($remember_token, 1, 1), $message);
-                    $message2                    = str_replace("{{otp3}}", substr($remember_token, 2, 1), $message1);
-                    $message3                    = str_replace("{{otp4}}", substr($remember_token, 3, 1), $message2);
+                    $message3                    = $this->otpEmailMessage($remember_token, $generalSetting->email_template_forgot_password);
                     $subject                     = $generalSetting->site_name . ' :: Forgot Password OTP';
-                    $this->sendMail($checkUser->email, $subject, $message3);
+                    if (! $this->sendMail($checkUser->email, $subject, $message3)) {
+                        return redirect()->back()->with('error_message', 'We could not send the OTP email. Please try again shortly.');
+                    }
                     /* email sent */
                     /* email log save */
                     $postData2 = [
@@ -2259,8 +2584,18 @@ class FrontController extends Controller
                         User::where('id', '=', $checkUser->id)->update($postData);
                         /* email sent */
                         $generalSetting              = GeneralSetting::find('1');
-                        $message                     = str_replace("{{name}}", $checkUser->first_name . ' ' . $checkUser->last_name, $generalSetting->email_template_change_password);
-                        $message1                    = str_replace("{{email}}", $checkUser->email, $message);
+                        $message1                    = $this->configuredEmailMessage(
+                            $generalSetting->email_template_change_password,
+                            [
+                                '{{name}}' => $checkUser->first_name . ' ' . $checkUser->last_name,
+                                '{{email}}' => $checkUser->email,
+                            ],
+                            'email-templates.change-password',
+                            [
+                                'name' => $checkUser->first_name . ' ' . $checkUser->last_name,
+                                'email' => $checkUser->email,
+                            ]
+                        );
                         $subject                     = $generalSetting->site_name . ' :: Reset Password';
                         $this->sendMail($checkUser->email, $subject, $message1);
                         /* email sent */
@@ -2310,7 +2645,7 @@ class FrontController extends Controller
         $data['getUser']                = User::where('id', '=', $uId)->where('status', '=', 1)->first();
         if ($request->isMethod('post')) {
             $postData = $request->all();
-            if ($postData['mode'] = 'profile') {
+            if (($postData['mode'] ?? '') == 'profile') {
                 $rules = [
                     'first_name'            => 'required',
                     'last_name'             => 'required',
@@ -2372,6 +2707,7 @@ class FrontController extends Controller
     /* Change Password */
     public function changePassword(Request $request)
     {
+        $uId = session('user_id');
         if ($request->isMethod('post')) {
             $postData = $request->all();
             // Helper::pr($postData);
@@ -2381,7 +2717,7 @@ class FrontController extends Controller
                 'confirm_password'      => 'required|min:8|max:15',
             ];
             if ($this->validate($request, $rules)) {
-                $uId                = $postData['id'];
+                $uId                = session('user_id');
                 $getUser            = User::where('id', '=', $uId)->where('status', '=', 1)->first();
                 $old_password       = $postData['old_password'];
                 $new_password       = $postData['new_password'];
@@ -2407,6 +2743,10 @@ class FrontController extends Controller
                 return redirect()->back()->with('error_message', 'All Fields Required !!!');
             }
         }
+        $data['getUser']                = User::where('id', '=', $uId)->where('status', '=', 1)->first();
+        $title                          = 'Change Password';
+        $page_name                      = 'change-password';
+        echo $this->front_after_login_layout($title, $page_name, $data);
     }
     /* Change Password */
     /* Shipping & billing address */
@@ -2416,6 +2756,7 @@ class FrontController extends Controller
         $redirectLink                           = Helper::decoded($redirectLink);
         $data['getBillingAddrs']                = UserLocation::where('user_id', '=', $uId)->where('type', '=', 'BILLING')->where('status', '=', 1)->get();
         $data['getShippingAddrs']               = UserLocation::where('user_id', '=', $uId)->where('type', '=', 'SHIPPING')->where('status', '=', 1)->get();
+        $data['countries']                      = Country::select('id', 'name')->where('status', '=', 1)->where('name', '=', 'India')->get();
         if ($request->isMethod('post')) {
             $postData = $request->all();
             if ($postData['mode'] == 'address') {
@@ -2432,7 +2773,7 @@ class FrontController extends Controller
                         'type'          => $request->type,
                         'title'         => $request->title,
                         'address'       => $request->address,
-                        'country'       => $request->country,
+                        'country'       => 'India',
                         'state'         => $request->state,
                         'city'          => $request->city,
                         'locality'      => $request->locality,
@@ -2463,7 +2804,7 @@ class FrontController extends Controller
     public function addressesDelete(Request $request, $id)
     {
         $id                             = Helper::decoded($id);
-        UserLocation::where('id', '=', $id)->delete();
+        UserLocation::where('id', '=', $id)->where('user_id', '=', session('user_id'))->delete();
         return redirect("user/addresses")->with('success_message', 'Address Deleted Successfully !!!');
     }
     /* address delete */
@@ -2488,7 +2829,9 @@ class FrontController extends Controller
     {
         $uId                            = session('user_id');
         $id                             = Helper::decoded($id);
-        $data['getOrderDetail']         = Order::where('id', '=', $id)->first();
+        $data['getOrderDetail']         = Order::where('id', '=', $id)->where('cust_id', '=', $uId)->firstOrFail();
+        $data['orderItems']             = OrderDetail::where('order_id', '=', $id)->get();
+        $data['orderProducts']          = $this->productsForItems($data['orderItems']);
         $data['cancelOrderReasons']     = CancelOrderReason::select('id', 'name')->where('status', '=', 1)->get();
         if ($request->isMethod('post')) {
             $postData   = $request->all();
@@ -2500,7 +2843,7 @@ class FrontController extends Controller
                 'is_cancel_request'         => 1,
                 'cancel_request_timestamp'  => date('Y-m-d H:i:s'),
             ];
-            Order::where('id', '=', $order_id)->update($fields);
+            Order::where('id', '=', $order_id)->where('cust_id', '=', $uId)->update($fields);
             return redirect($page_name)->with('success_message', 'Order Cancelled Request Submitted Successfully !!!');
         }
 
@@ -2512,14 +2855,16 @@ class FrontController extends Controller
     {
         $id                             = Helper::decoded($id);
         $pageName                       = Helper::decoded($pageName);
-        Order::where('id', '=', $id)->update(['status' => 7]);
+        Order::where('id', '=', $id)->where('cust_id', '=', session('user_id'))->update(['status' => 7]);
         return redirect($pageName)->with('success_message', 'Order Cancelled Request Submitted Successfully !!!');
     }
     public function printInvoice(Request $request, $id)
     {
         $uId                            = session('user_id');
         $id                             = Helper::decoded($id);
-        $data['getOrderDetail']         = Order::where('id', '=', $id)->first();
+        $data['getOrderDetail']         = Order::where('id', '=', $id)->where('cust_id', '=', $uId)->firstOrFail();
+        $data['invoiceItems']            = OrderDetail::where('order_id', '=', $id)->get();
+        $data['invoiceProducts']         = $this->productsForItems($data['invoiceItems']);
 
         $page_name                      = 'print-invoice';
         return view('front.pages.user.' . $page_name, $data);
@@ -2530,6 +2875,7 @@ class FrontController extends Controller
     {
         $uId                            = session('user_id');
         $data['wishlistItems']          = UserWishlist::where('user_id', '=', $uId)->orderBy('id', 'DESC')->get();
+        $data['wishlistProducts']       = Product::whereIn('id', $data['wishlistItems']->pluck('product_id'))->get()->keyBy('id');
 
         $title                          = 'Wishlist';
         $page_name                      = 'wishlist';
@@ -2538,21 +2884,10 @@ class FrontController extends Controller
     public function wishlistProductDelete(Request $request, $id)
     {
         $id                             = Helper::decoded($id);
-        UserWishlist::where('id', '=', $id)->delete();
+        UserWishlist::where('id', '=', $id)->where('user_id', '=', session('user_id'))->delete();
         return redirect("user/wishlist")->with('success_message', 'Wishlist Product Deleted Successfully !!!');
     }
     /* user wishlist */
-    /* user reviews */
-    public function reviews(Request $request)
-    {
-        $uId                            = session('user_id');
-        $data['reviewItems']          = UserReview::where('user_id', '=', $uId)->orderBy('id', 'DESC')->get();
-
-        $title                          = 'Reviews';
-        $page_name                      = 'reviews';
-        echo $this->front_after_login_layout($title, $page_name, $data);
-    }
-    /* user reviews */
     /* Common Stripe Payment */
     private function commonStripePayment($user, $postData, $price, $msg = '')
     {
