@@ -1392,11 +1392,11 @@ class FrontController extends Controller
                 $sl_no              = $getLastEnquiry->sl_no;
                 $next_sl_no         = $sl_no + 1;
                 $next_sl_no_string  = str_pad($next_sl_no, 7, 0, STR_PAD_LEFT);
-                $order_no           = 'TCG-' . $next_sl_no_string;
+                $order_no           = 'S-' . $next_sl_no_string;
             } else {
                 $next_sl_no         = 1;
                 $next_sl_no_string  = str_pad($next_sl_no, 7, 0, STR_PAD_LEFT);
-                $order_no           = 'TCG-' . $next_sl_no_string;
+                $order_no           = 'S-' . $next_sl_no_string;
             }
             $getShippingAddr = [];
             $getCustomer    = User::where('id', '=', $uId)->first();

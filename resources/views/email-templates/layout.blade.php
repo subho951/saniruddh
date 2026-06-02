@@ -6,8 +6,8 @@
     $sitePhone = data_get($generalSetting, 'site_phone');
     $logoFile = trim((string) data_get($generalSetting, 'site_logo'));
     $logoUrl = $logoFile !== ''
-        ? asset('public/uploads/'.ltrim($logoFile, '/'))
-        : asset('public/frontend/images/logo/logo.png');
+        ? 'https://saniruddh.com/public/uploads/'.str_replace(' ', '%20', ltrim($logoFile, '/'))
+        : 'https://saniruddh.com/public/frontend/images/logo/logo.png';
     $emailTitle = trim($__env->yieldContent('emailTitle')) ?: $siteName;
     $preheader = trim($__env->yieldContent('preheader')) ?: 'A message from '.$siteName;
 @endphp
