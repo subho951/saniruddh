@@ -5,9 +5,8 @@
     $siteMail = data_get($generalSetting, 'site_mail');
     $sitePhone = data_get($generalSetting, 'site_phone');
     $logoFile = trim((string) data_get($generalSetting, 'site_logo'));
-    $uploadsUrl = rtrim((string) env('UPLOADS_URL', asset('public/uploads')), '/').'/';
     $logoUrl = $logoFile !== ''
-        ? $uploadsUrl.ltrim($logoFile, '/')
+        ? asset('public/uploads/'.ltrim($logoFile, '/'))
         : asset('public/frontend/images/logo/logo.png');
     $emailTitle = trim($__env->yieldContent('emailTitle')) ?: $siteName;
     $preheader = trim($__env->yieldContent('preheader')) ?: 'A message from '.$siteName;
