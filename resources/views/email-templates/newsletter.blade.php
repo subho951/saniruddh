@@ -1,39 +1,15 @@
-<?php
-use App\Models\GeneralSetting;
-$generalSetting             = GeneralSetting::find('1');
-?>
-<!doctype html>
-<html lang="en">
-  <head>
-    <title><?=$generalSetting->site_name?></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  </head>
-  <body style="padding: 0; margin: 0; box-sizing: border-box;">
-    <section style="padding: 80px 0; margin: 0 15px;">
-        <div style="max-width: 600px; background: #ffffff; margin: 0 auto; border-radius: 15px; padding: 20px 15px; box-shadow: 0 0 30px -5px #ccc;">
-          <div style="text-align: center;">
-              <img src="<?=env('UPLOADS_URL').$generalSetting->site_logo?>" alt="<?=$generalSetting->site_name?>" style=" width: 100%; max-width: 250px;">
-          </div>
-          <div>
-            <h3 style="text-align: center; font-size: 25px; color: #5c5b5b; font-family: sans-serif;">Thank you for contacting us</h3>
-            <table style="width: 100%;  border-spacing: 2px;">
-              <tbody>
-                <tr>
-                  <th style="background: #ccc; color: #000; width: 30%; padding: 10px; text-align: left; font-family: sans-serif; font-size: 14px;">Title</th>
-                  <td style="padding: 10px; background: #ccc; text-align: left; color: #000;font-family: sans-serif;font-size: 15px;"><?=$title?></td>
-                </tr>
-                <tr>
-                  <th style="background: #cccccc42; color: #000; width: 30%; padding: 10px; text-align: left; font-family: sans-serif; font-size: 14px;">Description</th>
-                  <td style="padding: 10px; background: #cccccc42; text-align: left; color: #000;font-family: sans-serif;font-size: 15px;"><?=$description?></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div style="border-top: 2px solid #ccc; margin-top: 50px; text-align: center; font-family: sans-serif;">
-          <div style="text-align: center; margin: 15px 0 10px;">All right reserved: © <?=date('Y')?> <?=$generalSetting->site_name?></div>
-        </div>
-      </div>
-    </section>
-  </body>
-</html>
+@extends('email-templates.layout')
+
+@section('emailTitle', $title)
+@section('preheader', \Illuminate\Support\Str::limit(strip_tags($description), 110))
+
+@section('content')
+    <p style="color:#9b6a38;font-size:11px;font-weight:bold;letter-spacing:2px;margin:0 0 10px;text-transform:uppercase;">From our journal</p>
+    <h1 class="email-title" style="color:#382f2b;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:normal;line-height:1.2;margin:0 0 18px;">{{ $title }}</h1>
+    <div style="color:#51463f;font-size:15px;line-height:1.8;">
+        {!! $description !!}
+    </div>
+    @if(!empty($attachment))
+        <p style="background:#f7f0e5;border-left:3px solid #9b6a38;color:#6d5a47;font-size:13px;margin:24px 0 0;padding:13px 15px;">A related attachment is included with this email.</p>
+    @endif
+@endsection

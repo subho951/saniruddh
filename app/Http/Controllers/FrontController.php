@@ -1816,7 +1816,12 @@ class FrontController extends Controller
     private function configuredEmailMessage($configuredTemplate, $replacements, $fallbackView, $fallbackData)
     {
         if (filled($configuredTemplate)) {
-            return str_replace(array_keys($replacements), array_values($replacements), $configuredTemplate);
+            $configuredBody = str_replace(array_keys($replacements), array_values($replacements), $configuredTemplate);
+            if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $configuredBody, $matches)) {
+                $configuredBody = $matches[1];
+            }
+
+            return view('email-templates.configured-message', compact('configuredBody'))->render();
         }
 
         return view($fallbackView, $fallbackData)->render();

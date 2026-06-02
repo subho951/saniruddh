@@ -63,7 +63,7 @@
                                             <div class="product-category"><a href="{{ url('products/'.($categorySlugsById[$product->main_category] ?? '')) }}">Category : {{ $categoriesById[$product->main_category] ?? 'Boutique' }}</a></div>
                                             <div class="product-action">
                                                 <a href="{{ $productUrl($product) }}" class="action" data-tooltip="tooltip" data-placement="top" title="Choose Options"><i class="fa fa-shopping-cart"></i></a>
-                                                <a href="{{ url('make-wishlist/'.\App\Helpers\Helper::encoded($product->id)) }}" class="action" data-tooltip="tooltip" data-placement="top" title="Wishlist"><i class="fa fa-heart-o"></i></a>
+                                                <a href="{{ $user ? url('make-wishlist/'.\App\Helpers\Helper::encoded($product->id)) : url('signin') }}" class="action" data-tooltip="tooltip" data-placement="top" title="{{ $wishlistProductIds->contains($product->id) ? 'Remove from Wishlist' : 'Wishlist' }}"><i class="fa {{ $wishlistProductIds->contains($product->id) ? 'fa-heart' : 'fa-heart-o' }}"></i></a>
                                             </div>
                                         </div>
                                         <h4 class="product-title"><a href="{{ $productUrl($product) }}">{{ $product->name }}</a></h4>
@@ -135,7 +135,7 @@
                                             <div class="product-category"><a href="{{ url('products/'.($categorySlugsById[$product->main_category] ?? '')) }}">Category : {{ $categoriesById[$product->main_category] ?? 'Boutique' }}</a></div>
                                             <div class="product-action">
                                                 <a href="{{ $productUrl($product) }}" class="action" data-tooltip="tooltip" data-placement="top" title="Choose Options"><i class="fa fa-shopping-cart"></i></a>
-                                                <a href="{{ url('make-wishlist/'.\App\Helpers\Helper::encoded($product->id)) }}" class="action" data-tooltip="tooltip" data-placement="top" title="Wishlist"><i class="fa fa-heart-o"></i></a>
+                                                <a href="{{ $user ? url('make-wishlist/'.\App\Helpers\Helper::encoded($product->id)) : url('signin') }}" class="action" data-tooltip="tooltip" data-placement="top" title="{{ $wishlistProductIds->contains($product->id) ? 'Remove from Wishlist' : 'Wishlist' }}"><i class="fa {{ $wishlistProductIds->contains($product->id) ? 'fa-heart' : 'fa-heart-o' }}"></i></a>
                                             </div>
                                         </div>
                                         <h4 class="product-title"><a href="{{ $productUrl($product) }}">{{ $product->name }}</a></h4>

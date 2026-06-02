@@ -1,6 +1,10 @@
 @php
-    $canUseSavedAddresses = $user && $getBillingAddrs->isNotEmpty() && $getShippingAddrs->isNotEmpty();
-    $defaultCheckoutType = old('checkout_type', $canUseSavedAddresses ? 'EXISTING' : 'GUEST');
+    $hasSavedBillingAddress = $user && $getBillingAddrs->isNotEmpty();
+    $hasSavedShippingAddress = $user && $getShippingAddrs->isNotEmpty();
+    $canUseSavedAddresses = $hasSavedBillingAddress && $hasSavedShippingAddress;
+    $defaultCheckoutType = $canUseSavedAddresses && old('checkout_type', 'EXISTING') == 'EXISTING' ? 'EXISTING' : 'GUEST';
+    $selectedBillingAddress = old('billing', data_get($getBillingAddrs->first(), 'id'));
+    $selectedShippingAddress = old('shipping', data_get($getShippingAddrs->first(), 'id'));
 @endphp
 
 @include('front.elements.page-banner', [
@@ -33,29 +37,50 @@
                         <div class="checkout-form">
                             <div class="checkout-title"><h4 class="title">Delivery Details</h4></div>
 
-                            @if($canUseSavedAddresses)
+                            @if($user)
                                 <div class="storefront-checkout-switch">
-                                    <label><input type="radio" name="checkout_type" value="EXISTING" {{ $defaultCheckoutType == 'EXISTING' ? 'checked' : '' }}> Use saved addresses</label>
+                                    @if($canUseSavedAddresses)
+                                        <label><input type="radio" name="checkout_type" value="EXISTING" {{ $defaultCheckoutType == 'EXISTING' ? 'checked' : '' }}> Use saved addresses</label>
+                                    @endif
                                     <label><input type="radio" name="checkout_type" value="GUEST" {{ $defaultCheckoutType == 'GUEST' ? 'checked' : '' }}> Enter another address</label>
                                 </div>
-                                <div id="saved-addresses" class="{{ $defaultCheckoutType == 'EXISTING' ? '' : 'd-none' }}">
-                                    <div class="single-form">
-                                        <label class="form-label">Billing address</label>
-                                        <select name="billing" class="form-select">
+
+                                <div id="saved-addresses" class="storefront-form-card">
+                                    <h3>Saved Billing Address</h3>
+                                    @if($hasSavedBillingAddress)
+                                        <div class="storefront-check-list">
                                             @foreach($getBillingAddrs as $address)
-                                                <option value="{{ $address->id }}">{{ $address->title }}: {{ $address->address }}, {{ $address->city }}, {{ $address->state }} {{ $address->zipcode }}</option>
+                                                <label class="storefront-address-card">
+                                                    <input type="radio" name="billing" value="{{ $address->id }}" {{ (string) $selectedBillingAddress === (string) $address->id ? 'checked' : '' }} required>
+                                                    <span>
+                                                        <strong>{{ $address->title }}</strong><br>
+                                                        {{ $address->address }}, {{ $address->city }}, {{ $address->state }} {{ $address->zipcode }}, {{ $address->country }}
+                                                    </span>
+                                                </label>
                                             @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="single-form">
-                                        <label class="form-label">Shipping address</label>
-                                        <select name="shipping" class="form-select">
+                                        </div>
+                                    @else
+                                        <p>No billing address is saved yet.</p>
+                                    @endif
+
+                                    <h3 class="mt-4">Saved Shipping Address</h3>
+                                    @if($hasSavedShippingAddress)
+                                        <div class="storefront-check-list">
                                             @foreach($getShippingAddrs as $address)
-                                                <option value="{{ $address->id }}">{{ $address->title }}: {{ $address->address }}, {{ $address->city }}, {{ $address->state }} {{ $address->zipcode }}</option>
+                                                <label class="storefront-address-card">
+                                                    <input type="radio" name="shipping" value="{{ $address->id }}" {{ (string) $selectedShippingAddress === (string) $address->id ? 'checked' : '' }} required>
+                                                    <span>
+                                                        <strong>{{ $address->title }}</strong><br>
+                                                        {{ $address->address }}, {{ $address->city }}, {{ $address->state }} {{ $address->zipcode }}, {{ $address->country }}
+                                                    </span>
+                                                </label>
                                             @endforeach
-                                        </select>
-                                    </div>
-                                    <p><a href="{{ url('user/addresses/'.\App\Helpers\Helper::encoded('checkout')) }}">Manage saved addresses</a></p>
+                                        </div>
+                                    @else
+                                        <p>No shipping address is saved yet.</p>
+                                    @endif
+
+                                    <p class="mt-3 mb-0"><a href="{{ url('user/addresses/'.\App\Helpers\Helper::encoded('checkout')) }}">Manage saved addresses</a></p>
                                 </div>
                             @else
                                 <input type="hidden" name="checkout_type" value="GUEST">
@@ -87,7 +112,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var savedAddresses = document.getElementById('saved-addresses');
         var guestAddresses = document.getElementById('guest-addresses');
 
-        savedAddresses?.classList.toggle('d-none', !isExisting);
         guestAddresses?.classList.toggle('d-none', isExisting);
         savedAddresses?.querySelectorAll('input, select, textarea').forEach(function (field) {
             field.disabled = !isExisting;

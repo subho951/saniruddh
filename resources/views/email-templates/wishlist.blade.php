@@ -1,52 +1,25 @@
-<?php
-use App\Models\GeneralSetting;
-$generalSetting             = GeneralSetting::find('1');
-?>
-<!doctype html>
-<html lang="en">
-  <head>
-    <title><?=$generalSetting->site_name?></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  </head>
-  <body style="padding: 0; margin: 0; box-sizing: border-box;">
-    <section style="padding: 80px 0; margin: 0 15px;">
-        <div style="max-width: 600px; background: #ffffff; margin: 0 auto; border-radius: 15px; padding: 20px 15px; box-shadow: 0 0 30px -5px #ccc;">
-          <div style="text-align: center;">
-              <img src="<?=env('UPLOADS_URL').$generalSetting->site_logo?>" alt="" style=" width: 100%; max-width: 250px;">
-          </div>
-          <div>
-            <h3 style="text-align: center; font-size: 25px; color: #5c5b5b; font-family: sans-serif;">Hi, Welcome to <?=$generalSetting->site_name?>!</h3>
-            <h5 style="text-align: center; font-size: 15px; color: green; font-family: sans-serif;"><?=$mailHeader?></h5>
-            <table style="width: 100%;  border-spacing: 2px;">
-              <tbody>
-                <tr>
-                  <th style="background: #ccc; color: #000; padding: 10px; text-align: left; font-family: sans-serif; font-size: 14px;">Product Name</th>
-                  <td style="padding: 10px; background: #ccc; text-align: left; color: #000;font-family: sans-serif;font-size: 15px;"><?=$getProduct->name?></td>
-                </tr>
-                <tr>
-                  <th style="background: #ccc; color: #000; padding: 10px; text-align: left; font-family: sans-serif; font-size: 14px;">Product Base Price</th>
-                  <td style="padding: 10px; background: #ccc; text-align: left; color: #000;font-family: sans-serif;font-size: 15px;"><?=$getProduct->base_price?></td>
-                </tr>
-                <tr>
-                  <th style="background: #ccc; color: #000; padding: 10px; text-align: left; font-family: sans-serif; font-size: 14px;">Short Description</th>
-                  <td style="padding: 10px; background: #ccc; text-align: left; color: #000;font-family: sans-serif;font-size: 15px;"><?=$getProduct->short_description?></td>
-                </tr>
-                <tr>
-                  <th style="background: #ccc; color: #000; padding: 10px; text-align: left; font-family: sans-serif; font-size: 14px;">Product SKU</th>
-                  <td style="padding: 10px; background: #ccc; text-align: left; color: #000;font-family: sans-serif;font-size: 15px;"><?=$getProduct->product_sku?></td>
-                </tr>
-                <!-- <tr>
-                  <th style="background: #ccc; color: #000; padding: 10px; text-align: left; font-family: sans-serif; font-size: 14px;">Product Image</th>
-                  <td style="padding: 10px; background: #ccc; text-align: left; color: #000;font-family: sans-serif;font-size: 15px;"><img src="<?=env('UPLOADS_URL').'product/'.$getProduct->cover_image?>" style="width: 150px; height: 150px;"></td>
-                </tr> -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div style="border-top: 2px solid #ccc; margin-top: 50px; text-align: center; font-family: sans-serif;">
-          <div style="text-align: center; margin: 15px 0 10px;">All right reserved: © <?=date('Y')?> <?=$generalSetting->site_name?></div>
-        </div>
-      </div>
-    </section>
-  </body>
-</html>
+@php
+    $productImage = !empty($getProduct->cover_image)
+        ? rtrim((string) env('UPLOADS_URL', asset('public/uploads')), '/').'/product/'.$getProduct->cover_image
+        : asset('public/uploads/no-image.jpg');
+@endphp
+@extends('email-templates.layout')
+
+@section('emailTitle', 'Wishlist updated')
+@section('preheader', strip_tags($mailHeader))
+
+@section('content')
+    <p style="color:#9b6a38;font-size:11px;font-weight:bold;letter-spacing:2px;margin:0 0 10px;text-transform:uppercase;">Wishlist update</p>
+    <h1 class="email-title" style="color:#382f2b;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:normal;line-height:1.2;margin:0 0 12px;">Your wishlist has been updated</h1>
+    <p style="margin:0 0 22px;">{{ $mailHeader }}</p>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fffaf3;border:1px solid #eee1cf;border-collapse:collapse;width:100%;">
+        <tr>
+            <td align="center" style="border-bottom:1px solid #eee4d7;padding:18px;">
+                <img src="{{ $productImage }}" alt="{{ $getProduct->name }}" style="display:block;height:auto;max-height:180px;max-width:180px;width:auto;">
+            </td>
+        </tr>
+        @include('email-templates.partials.detail-row', ['label' => 'Product', 'value' => e($getProduct->name)])
+        @include('email-templates.partials.detail-row', ['label' => 'Price', 'value' => '&#8377; '.number_format((float) $getProduct->discounted_price, 2)])
+        @include('email-templates.partials.detail-row', ['label' => 'SKU', 'value' => e($getProduct->product_sku ?: 'N/A')])
+    </table>
+@endsection

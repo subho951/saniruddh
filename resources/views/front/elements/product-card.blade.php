@@ -6,6 +6,7 @@
     $cardProductBasePrice = (float) data_get($cardProduct, 'base_price', 0);
     $cardProductPrice = (float) data_get($cardProduct, 'discounted_price', $cardProductBasePrice);
     $cardProductUrl = url('product/'.$cardProductSlug.'/'.\App\Helpers\Helper::encoded($cardProductId));
+    $cardIsWishlisted = $user && $wishlistProductIds->contains($cardProductId);
 @endphp
 
 <div class="single-product storefront-product-card">
@@ -22,7 +23,7 @@
             </div>
             <div class="product-action">
                 <a href="{{ $cardProductUrl }}" class="action" data-tooltip="tooltip" data-placement="top" title="Choose Options"><i class="fa fa-shopping-cart"></i></a>
-                <a href="{{ $user ? url('make-wishlist/'.\App\Helpers\Helper::encoded($cardProductId)) : url('signin') }}" class="action" data-tooltip="tooltip" data-placement="top" title="Wishlist"><i class="fa fa-heart-o"></i></a>
+                <a href="{{ $user ? url('make-wishlist/'.\App\Helpers\Helper::encoded($cardProductId)) : url('signin') }}" class="action" data-tooltip="tooltip" data-placement="top" title="{{ $cardIsWishlisted ? 'Remove from Wishlist' : 'Wishlist' }}"><i class="fa {{ $cardIsWishlisted ? 'fa-heart' : 'fa-heart-o' }}"></i></a>
             </div>
         </div>
         <h3 class="product-title"><a href="{{ $cardProductUrl }}">{{ $cardProductName }}</a></h3>

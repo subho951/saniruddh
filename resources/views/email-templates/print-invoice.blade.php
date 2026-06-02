@@ -1,398 +1,178 @@
-<?php
-use App\Models\GeneralSetting;
-use App\Models\Product;
-use App\Models\ProductAttribute;
-use App\Models\Attribute;
-use App\Models\AttributeValue;
-use App\Models\ProductImage;
-use App\Models\ProductVariation;
-use App\Models\Order;
-use App\Models\OrderDetail;
-use App\Models\CancelOrderReason;
-use App\Helpers\Helper;
-$generalSetting = GeneralSetting::find(1);
+@php
+    use App\Models\GeneralSetting;
+    use App\Models\OrderDetail;
+    use App\Models\Product;
+    use App\Models\ProductVariation;
 
-// function image_to_base64($file_path) {
-//     $imageData = file_get_contents($file_path);
-//     return 'data:image/png;base64,' . base64_encode($imageData);
-// }
-// $image = image_to_base64('https://admin.threecranesgallery.com/public/uploads/product/677d8f799ea3f.avif'); // Convert WebP to Base64
-// echo $html = '<img src="' . $image . '" height="70" />';die;
+    $generalSetting = $generalSetting ?? GeneralSetting::find(1);
+    $siteName = data_get($generalSetting, 'site_name') ?: config('app.name', 'Saniruddh');
+    $siteMail = data_get($generalSetting, 'site_mail');
+    $sitePhone = data_get($generalSetting, 'site_phone');
+    $siteUrl = data_get($generalSetting, 'site_url');
+    $logoFile = trim((string) data_get($generalSetting, 'site_logo'));
+    $logoPath = $logoFile !== '' ? public_path('uploads/'.$logoFile) : '';
+    $fallbackLogoPath = public_path('frontend/images/logo/logo.png');
+    $resolvedLogoPath = is_file($logoPath) ? $logoPath : $fallbackLogoPath;
+    $logoSrc = asset('public/frontend/images/logo/logo.png');
 
-// function image_to_base64($url) {
-//     $imageData = file_get_contents($url);
-//     $base64 = base64_encode($imageData);
-//     return 'data:image/png;base64,' . $base64; // Convert AVIF to PNG
-// }
+    if (is_file($resolvedLogoPath)) {
+        $logoMime = mime_content_type($resolvedLogoPath) ?: 'image/png';
+        $logoSrc = 'data:'.$logoMime.';base64,'.base64_encode(file_get_contents($resolvedLogoPath));
+    }
 
-// $base64_image = image_to_base64('https://admin.threecranesgallery.com/public/uploads/product/677d970da0e90.avif');
-// echo $html = '<img src="' . $base64_image . '" />';die;
-?>
-<!DOCTYPE html>
-<html lang="en" xmlns="" xmlns:o="urn:schemas-microsoft-com:office:office">
+    $orderDetails = OrderDetail::where('order_id', '=', $getOrderDetail->id)->get();
+    $products = Product::whereIn('id', $orderDetails->pluck('product_id'))->get()->keyBy('id');
+    $variationSkus = ProductVariation::whereIn('id', $orderDetails->pluck('variation_id')->filter())->pluck('sku', 'id');
+    $orderDate = trim(
+        ($getOrderDetail->order_date ? date('d M Y', strtotime($getOrderDetail->order_date)) : '')
+        .' '
+        .($getOrderDetail->order_time ? date('h:i A', strtotime($getOrderDetail->order_time)) : '')
+    );
+    $paymentLabel = (int) $getOrderDetail->payment_status === 1
+        ? 'Paid'
+        : ($getOrderDetail->payment_mode === 'COD' ? 'Cash on delivery' : 'Pending');
+@endphp
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="x-apple-disable-message-reformatting">
-    <title>Threecranes Invoice</title>
+    <meta charset="utf-8">
+    <title>{{ $siteName }} Invoice {{ $getOrderDetail->order_no }}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-        body {
-          font-size: 16px;
-          font-family: "Poppins", serif;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-        h3 {
-            margin: 0 0 5px 0;
-            font-size: 15px;
-        }
-        h6 {
-            margin: 0;
-            font-size: 12px;
-        }
-        p{
-            margin: 0 0 5px 0;
-            font-size: 13px;
-        }
-        b {
-            font-size: 14px;
-            font-weight: 600;
-        }
-        table tr td {
-            padding: 8px;
-            vertical-align: top;
-            font-size: 12px;
-        }
-        .margin {
-            display: block;
-            /*margin: 17px 0px;*/
-        }
-        .bold {
-          font-weight: bold;
-        }
-        .right {
-          text-align: right;
-        }
-        .large {
-          font-size: 1.75em;
-        }
-        .total {
-          font-weight: bold;
-          color: #fb7578;
-        }
-        .invoice-info-container {
-          font-size: 0.875em;
-        }
-        .invoice-info-container td {
-          padding: 4px 0;
-        }
-        .client-name {
-          font-size: 1.5em;
-          vertical-align: top;
-        }
-        .line-items-container {
-          margin: 70px 0;
-          font-size: 0.875em;
-        }
-        .line-items-container th {
-          text-align: left;
-          color: #999;
-          border-bottom: 2px solid #ddd;
-          padding: 10px 0 15px 0;
-          font-size: 0.75em;
-          text-transform: uppercase;
-        }
-        .line-items-container th:last-child {
-          text-align: right;
-        }
-        .line-items-container td {
-          padding: 15px 0;
-        }
-        .line-items-container tbody tr:first-child td {
-          padding-top: 25px;
-        }
-        .line-items-container.has-bottom-border tbody tr:last-child td {
-          padding-bottom: 25px;
-          border-bottom: 2px solid #ddd;
-        }
-        .line-items-container.has-bottom-border {
-          margin-bottom: 0;
-        }
-        .line-items-container th.heading-quantity {
-          width: 50px;
-        }
-        .line-items-container th.heading-price {
-          text-align: right;
-          width: 100px;
-        }
-        .line-items-container th.heading-subtotal {
-          width: 100px;
-        }
-        .payment-info {
-          width: 38%;
-          font-size: 0.75em;
-          line-height: 1.5;
-        }
-        .footer {
-          margin-top: 100px;
-        }
-        .footer-thanks {
-          font-size: 1.125em;
-        }
-        .footer-thanks img {
-          display: inline-block;
-          position: relative;
-          top: 1px;
-          width: 16px;
-          margin-right: 4px;
-        }
-        .footer-info {
-          float: right;
-          margin-top: 5px;
-          font-size: 0.75em;
-          color: #ccc;
-        }
-        .footer-info span {
-          padding: 0 5px;
-          color: black;
-          font-size:14px;
-        }
-        .footer-info span:last-child {
-          padding-right: 0;
-        }
-        .page-container {
-          display: none;
-        }
-        .cart-table tr td:last-child {
-            text-align: right;
-            width: 16%;
-        }
-        .cart-table tr td{
-            border: 1px solid #ccc;
-        }
-        .border-none {
-            border: none !important;
-            padding: 3px 0 3px 3px;
-        }
-        .text-right{
-            text-align: right;
-        }
-        .table-head td{
-            font-weight: 600;
-            background: #f5f5f5;
-            font-size: 11px;
-        }
-        .muted-red{
-            color: #b94a48;
-            font-size: 11px;
-            font-weight: 600;
-            margin: 3px 0;
-        }
+        * { box-sizing: border-box; }
+        body { color: #443b35; font-family: DejaVu Sans, sans-serif; font-size: 11px; line-height: 1.55; margin: 0; padding: 0; }
+        table { border-collapse: collapse; width: 100%; }
+        .page { padding: 22px; }
+        .brand-bar { background: #6f2634; height: 7px; }
+        .header { border-bottom: 1px solid #e5d7c4; padding: 20px 0 18px; }
+        .logo { max-height: 68px; max-width: 220px; }
+        .invoice-label { color: #9b6a38; font-size: 10px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+        .invoice-number { color: #382f2b; font-family: DejaVu Serif, serif; font-size: 22px; margin-top: 6px; }
+        .meta { color: #75675b; font-size: 10px; margin-top: 5px; }
+        .section-title { color: #6f2634; font-family: DejaVu Serif, serif; font-size: 15px; margin: 0 0 8px; }
+        .address-grid { margin: 20px 0; }
+        .address-card { background: #fffaf3; border: 1px solid #eadfce; line-height: 1.65; padding: 13px; vertical-align: top; width: 49%; }
+        .address-space { width: 2%; }
+        .eyebrow { color: #9b6a38; font-size: 9px; font-weight: bold; letter-spacing: 1.3px; margin-bottom: 5px; text-transform: uppercase; }
+        .items th { background: #6f2634; color: #ffffff; font-size: 9px; letter-spacing: .7px; padding: 9px 8px; text-align: left; text-transform: uppercase; }
+        .items td { border-bottom: 1px solid #eee4d7; padding: 10px 8px; vertical-align: top; }
+        .items .right, .totals .right { text-align: right; }
+        .product-name { color: #382f2b; font-weight: bold; }
+        .muted { color: #806f62; font-size: 10px; }
+        .summary { margin-top: 14px; }
+        .notes { color: #75675b; font-size: 10px; line-height: 1.65; padding-right: 18px; vertical-align: top; width: 56%; }
+        .totals { background: #fffaf3; border: 1px solid #eadfce; width: 44%; }
+        .totals td { padding: 6px 9px; }
+        .totals .grand td { border-top: 1px solid #d9c5aa; color: #6f2634; font-size: 13px; font-weight: bold; padding-top: 9px; }
+        .footer { border-top: 1px solid #eadfce; color: #806f62; font-size: 10px; margin-top: 24px; padding-top: 13px; text-align: center; }
     </style>
 </head>
-<body style="margin:0;padding:0;">
-    <table style="width: 700px;margin: 0 auto;">
-        <tr>
-            <td >
-                <div class="logo-container">
-                    <img style="height:86px" src="data:image/svg+xml;base64,<?php echo base64_encode(file_get_contents(base_path('public/uploads/' . $generalSetting->site_logo))); ?>" alt="<?=$generalSetting->site_name?>">
-                  </div>
-            </td>
-            <td style="vertical-align: middle; text-align: right;">
-                <h3>Order #<?=$getOrderDetail->order_no?>
-                </h3>
-                <p>
-                    <?=$getOrderDetail->b_fname.' '.$getOrderDetail->b_lname?> (<?=$getOrderDetail->b_email?>)<br>
-                    <?=$getOrderDetail->b_phone?>
-                </p>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <div class="margin"></div>
-            </td>
-        </tr>
-        <tr>
-            <td style="width: 25%;">
-                <b>Bill to
-                </b>
-                <p>
-                    <?=$getOrderDetail->b_fname.' '.$getOrderDetail->b_lname?>
-                    <?=$getOrderDetail->b_street?>, <?=$getOrderDetail->b_suburb?>
-                    <?=$getOrderDetail->b_state?> <?=$getOrderDetail->b_postcode?>
-                    <?=$getOrderDetail->b_country?><br>
-                  	<?=$getOrderDetail->b_phone?><br>
-                  	<?=$getOrderDetail->b_email?>
-                </p>
-                <b>Ship to
-                </b>
-                <p>
-                  	<?=$getOrderDetail->s_fname.' '.$getOrderDetail->s_lname?>
-                    <?=$getOrderDetail->s_street?>, <?=$getOrderDetail->s_suburb?>
-                    <?=$getOrderDetail->s_state?> <?=$getOrderDetail->s_postcode?>
-                    <?=$getOrderDetail->s_country?><br>
-                  	<?=$getOrderDetail->s_phone?><br>
-                  	<?=$getOrderDetail->s_email?>
-                </p>
-                <!--<div class="margin"></div>
-                <b>Scheduled to ship by
-                </b>
-                <p>Jan 30, 2025</p>-->
-                <div class="margin"></div>
-                	<b>Shop</b>
-                	<p><?=$generalSetting->site_name?></p>
-                <div class="margin"></div>
-                	<b>Order date</b>
-                	<p><?=date_format(date_create($getOrderDetail->order_date), "M d, Y")?> <?=date_format(date_create($getOrderDetail->order_time), "h:i A")?></p>
-                <div class="margin"></div>
-                	<b>Payment method</b>
-                	<p>Paid via <?=$getOrderDetail->payment_mode?></p>
-                <!--<div class="margin"></div>
-                <b>Shipping method</b>
-                	<p>USPS Parcel Select Ground</p>-->
-                <!--<div class="margin"></div>
-                	<b>Packaging</b>
-                	<p>Package/Thick Envelope (15 x 12 x 2 in, 1lb)</p>-->
-              	<?php if($getOrderDetail->tracking_number != ''){?>
-                  <div class="margin"></div>
-                  <b>Tracking</b>
-                  <p><?=$getOrderDetail->tracking_number?> via USPS</p>
-              	<?php } ?>
-            </td>
-            <td style="width: 75%;">
-                <table style="width: 100%;" class="cart-table">
-                    <tr class="table-head">
-                        <td style="width: 12%;">Image</td>
-                        <td style="width: 44%;">Product</td>
-                        <td style="width: 18%;">Size / Color</td>
-                        <td style="width: 12%;">SKU</td>
-                        <td style="width: 14%; text-align: right;">Amount</td>
-                    </tr>
-                   	<?php
-                     $orderDetails = OrderDetail::where('order_id', '=', $getOrderDetail->id)->get();
-                     $sl=1;
-                     $subtotal=0;
-                     if($orderDetails){ foreach($orderDetails as $orderDetail){
-                        $getProduct    = Product::where('id', '=', $orderDetail->product_id)->first();
-                        $subtotal      += $orderDetail->total;
-                        $parent_id_val    = json_decode($orderDetail->parent_id_val);
-                        $child_id_val  = json_decode($orderDetail->child_id_val);
-                        $variationInfo = null;
-                        if ((int)$orderDetail->variation_id > 0) {
-                            $variationInfo = ProductVariation::select('sku')->where('id', '=', $orderDetail->variation_id)->first();
-                        }
-                        $sku = (($variationInfo && $variationInfo->sku != '') ? $variationInfo->sku : (($getProduct && $getProduct->product_sku != '') ? $getProduct->product_sku : 'N/A'));
-                        $sizeColor = 'N/A';
-                        if (is_array($parent_id_val) && is_array($child_id_val) && count($parent_id_val) > 0) {
-                            $sizeColorList = [];
-                            for($i=0; $i<count($parent_id_val); $i++){
-                                $attrName = trim((string)$parent_id_val[$i]);
-                                $attrVal  = trim((string)($child_id_val[$i] ?? ''));
-                                if($attrName != '' && $attrVal != ''){
-                                    $sizeColorList[] = $attrName.' : '.$attrVal;
-                                } elseif($attrVal != ''){
-                                    $sizeColorList[] = $attrVal;
-                                }
-                            }
-                            if(!empty($sizeColorList)){
-                                $sizeColor = implode(', ', $sizeColorList);
-                            }
-                        }
-                        if($sizeColor == 'N/A' && $orderDetail->variation_name != ''){
-                            $sizeColor = $orderDetail->variation_name;
-                        }
-                    ?>
-                      <tr>
-                          <td style="width:12%">
-                            <?php
-                            $url = env('UPLOADS_URL').'product/'.(($getProduct)?$getProduct->cover_image:'');
-                            $headers = @get_headers($url);
-                            if ($headers && strpos($headers[0], '200')) {
-                                $imageLink        = rawurlencode(env('UPLOADS_URL').'product/'.(($getProduct)?$getProduct->cover_image:''));
-                                $resizeImageLink  = 'https://res.cloudinary.com/ddv59fl2y/image/fetch/w_300/' . $imageLink;
-                                $imageData        = file_get_contents($resizeImageLink);
-                                $generatedImage   = 'data:image/png;base64,' . base64_encode($imageData);
-                                echo $html        = '<img src="' . $generatedImage . '" style="height:auto !important; width: 50px !important;" class="img-fluid" alt="<?=$getProduct->name?>" />';
-                            } else {
-                            ?>
-                                <img src="<?=env('UPLOADS_URL').'product/'.(($getProduct)?$getProduct->cover_image:'')?>" style="height:auto !important; width: 50px !important;" class="img-fluid" alt="<?=$getProduct->name?>">
-                            <?php } ?>
-                          </td>
-                          <td style="width:44%">
-                              <small><?=(($getProduct)?$getProduct->name:'')?></small><br>
-                              <small><?=(($getProduct)?$getProduct->variation_name:'')?></small><br>  
-                              <small><?=(($getProduct)?$getProduct->product_sku:'')?></small>
-                          </td>
-                          <td style="width:18%">
-                              <p class="muted-red"><?=$sizeColor?></p>
-                          </td>
-                          <td style="width:12%">
-                              <p class="muted-red"><?=$sku?></p>
-                          </td>
-                          <td style="width:14%; text-align: right;">
-                              <?=$orderDetail->qty?> x $<?=number_format($orderDetail->rate,2)?>
-                          </td>
-                      </tr>
-                    <?php } }?>
+<body>
+    <div class="brand-bar"></div>
+    <div class="page">
+        <table class="header">
+            <tr>
+                <td>
+                    <img class="logo" src="{{ $logoSrc }}" alt="{{ $siteName }}">
+                </td>
+                <td style="text-align:right;">
+                    <div class="invoice-label">Tax invoice</div>
+                    <div class="invoice-number">{{ $getOrderDetail->order_no }}</div>
+                    <div class="meta">{{ $orderDate }}</div>
+                </td>
+            </tr>
+        </table>
+
+        <table class="address-grid">
+            <tr>
+                <td class="address-card">
+                    <div class="eyebrow">Bill to</div>
+                    <strong>{{ trim($getOrderDetail->b_fname.' '.$getOrderDetail->b_lname) }}</strong><br>
+                    {{ $getOrderDetail->b_street }}<br>
+                    {{ $getOrderDetail->b_suburb }}, {{ $getOrderDetail->b_state }} {{ $getOrderDetail->b_postcode }}<br>
+                    {{ $getOrderDetail->b_country }}<br>
+                    {{ $getOrderDetail->b_phone }}<br>
+                    {{ $getOrderDetail->b_email }}
+                </td>
+                <td class="address-space"></td>
+                <td class="address-card">
+                    <div class="eyebrow">Ship to</div>
+                    <strong>{{ trim($getOrderDetail->s_fname.' '.$getOrderDetail->s_lname) }}</strong><br>
+                    {{ $getOrderDetail->s_street }}<br>
+                    {{ $getOrderDetail->s_suburb }}, {{ $getOrderDetail->s_state }} {{ $getOrderDetail->s_postcode }}<br>
+                    {{ $getOrderDetail->s_country }}<br>
+                    {{ $getOrderDetail->s_phone }}<br>
+                    {{ $getOrderDetail->s_email }}
+                </td>
+            </tr>
+        </table>
+
+        <h2 class="section-title">Order details</h2>
+        <table class="items">
+            <thead>
+                <tr>
+                    <th style="width:36%;">Product</th>
+                    <th style="width:23%;">Variation</th>
+                    <th style="width:16%;">SKU</th>
+                    <th class="right" style="width:10%;">Qty</th>
+                    <th class="right" style="width:15%;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($orderDetails as $orderDetail)
+                    @php
+                        $product = $products->get($orderDetail->product_id);
+                        $variationNames = collect(json_decode($orderDetail->parent_id_val, true) ?: []);
+                        $variationValues = collect(json_decode($orderDetail->child_id_val, true) ?: []);
+                        $variationText = $variationNames->map(function ($name, $index) use ($variationValues) {
+                            $value = trim((string) $variationValues->get($index));
+                            return $value !== '' ? trim((string) $name).': '.$value : '';
+                        })->filter()->implode(', ');
+                        $variationText = $variationText ?: ($orderDetail->variation_name ?: 'Standard');
+                        $sku = $variationSkus->get($orderDetail->variation_id) ?: data_get($product, 'product_sku', 'N/A');
+                        $lineAmount = (float) ($orderDetail->subtotal ?? $orderDetail->total);
+                    @endphp
                     <tr>
-                        <td colspan="3" class="border-none text-right"></td>
-                        <td class="border-none text-right">
-                            Item total 
+                        <td>
+                            <span class="product-name">{{ data_get($product, 'name', 'Product') }}</span>
                         </td>
-                        <td class="border-none text-right">
-                            $<?=number_format($subtotal,2)?>
-                        </td>
+                        <td class="muted">{{ $variationText }}</td>
+                        <td class="muted">{{ $sku ?: 'N/A' }}</td>
+                        <td class="right">{{ $orderDetail->qty }}</td>
+                        <td class="right">&#8377; {{ number_format($lineAmount, 2) }}</td>
                     </tr>
-                   	<tr>
-                        <td colspan="3" class="border-none text-right"></td>
-                        <td class="border-none text-right">Discount</td>
-                        <td class="border-none text-right">
-                            $<?=number_format($getOrderDetail->disc_amount,2)?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="border-none text-right"></td>
-                        <td class="border-none text-right">Shipping total</td>
-                        <td class="border-none text-right">
-                            $<?=number_format($getOrderDetail->shipping_amt,2)?>
-                        </td>
-                    </tr>
-                   	<tr>
-                        <td colspan="3" class="border-none text-right"></td>
-                        <td class="border-none text-right">Tax</td>
-                        <td class="border-none text-right">
-                            $<?=number_format($getOrderDetail->tax_amt,2)?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="border-none text-right"></td>
-                        <td class="border-none text-right"><strong>Order total</strong></td>
-                        <td class="border-none text-right">
-                           <strong> $<?=number_format($getOrderDetail->net_amt,2)?></strong>
-                        </td>
-                    </tr>
-                   
-                </table>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <div class="footer">
-                    <div class="footer-info">
-                      <span><?=$generalSetting->site_mail?></span> |
-                      <span><?=$generalSetting->site_phone?></span> |
-                      <span><?=$generalSetting->site_url?></span>
-                    </div>
-                    <div class="footer-thanks">
-                      <img src="data:image/svg+xml;base64,<?php echo base64_encode(file_get_contents('https://github.com/anvilco/html-pdf-invoice-template/raw/main/img/heart.png')); ?>" alt="heart">
-                      <span>Thank you!</span>
-                    </div>
-                  </div>
-            </td>
-        </tr>
-    </table>
+                @endforeach
+            </tbody>
+        </table>
+
+        <table class="summary">
+            <tr>
+                <td class="notes">
+                    <div class="eyebrow">Payment</div>
+                    {{ $getOrderDetail->payment_mode ?: 'Pending' }} &middot; {{ $paymentLabel }}
+                    @if(!empty($getOrderDetail->payment_txn_no))
+                        <br>Transaction: {{ $getOrderDetail->payment_txn_no }}
+                    @endif
+                    @if(!empty($getOrderDetail->tracking_number))
+                        <br>Tracking: {{ $getOrderDetail->tracking_number }}
+                    @endif
+                </td>
+                <td>
+                    <table class="totals">
+                        <tr><td>Subtotal</td><td class="right">&#8377; {{ number_format((float) $getOrderDetail->subtotal, 2) }}</td></tr>
+                        <tr><td>Discount</td><td class="right">- &#8377; {{ number_format((float) $getOrderDetail->disc_amount, 2) }}</td></tr>
+                        <tr><td>Shipping</td><td class="right">&#8377; {{ number_format((float) $getOrderDetail->shipping_amt, 2) }}</td></tr>
+                        <tr><td>Tax</td><td class="right">&#8377; {{ number_format((float) $getOrderDetail->tax_amt, 2) }}</td></tr>
+                        <tr class="grand"><td>Total</td><td class="right">&#8377; {{ number_format((float) $getOrderDetail->net_amt, 2) }}</td></tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            <strong>{{ $siteName }}</strong><br>
+            {{ $siteMail }}@if($siteMail && $sitePhone) &nbsp;|&nbsp; @endif{{ $sitePhone }}@if(($siteMail || $sitePhone) && $siteUrl) &nbsp;|&nbsp; @endif{{ $siteUrl }}
+            <br>Thank you for shopping with us.
+        </div>
+    </div>
 </body>
 </html>

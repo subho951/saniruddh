@@ -1,43 +1,12 @@
-<?php
-use App\Models\GeneralSetting;
-$generalSetting             = GeneralSetting::find('1');
-?>
-<!doctype html>
-<html lang="en">
-  <head>
-    <title><?=$generalSetting->site_name?></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  </head>
-  <body style="padding: 0; margin: 0; box-sizing: border-box;">
-    <section style="padding: 80px 0; height: 80vh; margin: 0 15px;">
-        <div style="max-width: 600px; background: #ffffff; margin: 0 auto; border-radius: 15px; padding: 20px 15px; box-shadow: 0 0 30px -5px #ccc;">
-          <div style="text-align: center;">
-              <img src="<?=env('UPLOADS_URL').$generalSetting->site_logo?>" alt="<?=$generalSetting->site_name?>" style=" width: 100%; max-width: 250px;">
-          </div>
-          <div>
-            <h3 style="text-align: center; font-size: 25px; color: #5c5b5b; font-family: sans-serif;">Hi, Welcome to <?=$generalSetting->site_name?>!</h3>
-            <h4 style="text-align: center; font-family: sans-serif; color: #5c5b5b ;">Your OTP</h4>
-            <div style="display: flex; justify-content: center;">
-                <div style="padding: 12px; margin: 5px; border: 2px solid #f9233f;width: 17px; height: 17px; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 15px;
-                font-family: sans-serif;"><?=substr($otp, 0, 1)?></div>
-                <div style="padding: 12px; margin: 5px; border: 2px solid #f9233f;width: 17px; height: 17px; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 15px;
-                font-family: sans-serif;"><?=substr($otp, 1, 1)?></div>
-                <div style="padding: 12px; margin: 5px; border: 2px solid #f9233f;width: 17px; height: 17px; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 15px;
-                font-family: sans-serif;"><?=substr($otp, 2, 1)?></div>
-                <div style="padding: 12px; margin: 5px; border: 2px solid #f9233f;width: 17px; height: 17px; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 15px;
-                font-family: sans-serif;"><?=substr($otp, 3, 1)?></div>
-                <!-- <div style="padding: 12px; margin: 5px; border: 2px solid #f9233f;width: 17px; height: 17px; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 15px;
-                font-family: sans-serif;"><?=substr($otp, 4, 1)?></div>
-                <div style="padding: 12px; margin: 5px; border: 2px solid #f9233f;width: 17px; height: 17px; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 15px;
-                font-family: sans-serif;"><?=substr($otp, 5, 1)?></div> -->
-            </div>
-            </table>
-          </div>
-        </div>
-        <div style="border-top: 2px solid #ccc; margin-top: 50px; text-align: center; font-family: sans-serif;">
-          <div style="text-align: center; margin: 15px 0 10px;">All right reserved: © <?=date('Y')?> <?=$generalSetting->site_name?></div>
-        </div>
-      </div>
-    </section>
-  </body>
-</html>
+@extends('email-templates.layout')
+
+@section('emailTitle', 'Your verification code')
+@section('preheader', 'Use your one-time verification code to continue.')
+
+@section('content')
+    <p style="color:#9b6a38;font-size:11px;font-weight:bold;letter-spacing:2px;margin:0 0 10px;text-transform:uppercase;">Verification</p>
+    <h1 class="email-title" style="color:#382f2b;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-weight:normal;line-height:1.2;margin:0 0 16px;">Your one-time code</h1>
+    <p style="margin:0 0 18px;">Enter this code to continue. For your security, do not share it with anyone.</p>
+    <div style="background:#fffaf3;border:1px solid #e4d3ba;color:#6f2634;font-family:Georgia,'Times New Roman',serif;font-size:32px;letter-spacing:10px;padding:18px 20px;text-align:center;">{{ $otp }}</div>
+    <p style="color:#7b6b5d;font-size:13px;margin:18px 0 0;">If you did not request this code, no action is required.</p>
+@endsection

@@ -4,6 +4,7 @@
         $productGallery = collect([$product->cover_image]);
     }
     $wishlistUrl = $user ? url('make-wishlist/'.\App\Helpers\Helper::encoded($product->id)) : url('signin');
+    $isWishlisted = $user && $wishlistProductIds->contains($product->id);
 @endphp
 
 @include('front.elements.page-banner', [
@@ -90,7 +91,7 @@
                                     <button class="btn btn-info btn-hover-primary rounded-pill" type="submit" {{ $product->product_qty <= 0 ? 'disabled' : '' }}>Add to Cart</button>
                                 </div>
                                 <div class="product-favourate">
-                                    <a href="{{ $wishlistUrl }}" class="favourate" title="Wishlist"><i class="fa fa-heart-o"></i></a>
+                                    <a href="{{ $wishlistUrl }}" class="favourate" title="{{ $isWishlisted ? 'Remove from Wishlist' : 'Wishlist' }}"><i class="fa {{ $isWishlisted ? 'fa-heart' : 'fa-heart-o' }}"></i></a>
                                 </div>
                             </div>
                         </form>

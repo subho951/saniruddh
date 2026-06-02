@@ -14,6 +14,7 @@ use App\Models\Admin;
 use App\Models\User;
 use App\Models\UserAccess;
 use App\Models\OrderDetail;
+use App\Models\UserWishlist;
 use Session;
 use Helper;
 class Controller extends BaseController
@@ -236,6 +237,7 @@ class Controller extends BaseController
         $data['home_page']          = $data['home_page'] ?? HomePage::where('status', '=', 1)->where('id', '=', 1)->first();
         $user_id                    = session('user_id');
         $data['user']               = User::find($user_id);
+        $data['wishlistProductIds'] = $user_id ? UserWishlist::where('user_id', '=', $user_id)->pluck('product_id') : collect();
         $data['parentCats']         = Category::select('id', 'category_name', 'slug')->where('status', '=', 1)->where('parent_id', '=', 0)->get();
         $data['childCats']          = Category::select('id', 'parent_id', 'category_name', 'slug')->where('status', '=', 1)->where('parent_id', '>', 0)->get()->groupBy('parent_id');
         $data['cartItemCount']      = $this->frontCartItemCount();
@@ -255,6 +257,7 @@ class Controller extends BaseController
         $data['home_page']          = $data['home_page'] ?? HomePage::where('status', '=', 1)->where('id', '=', 1)->first();
         $user_id                    = session('user_id');
         $data['user']               = User::find($user_id);
+        $data['wishlistProductIds'] = $user_id ? UserWishlist::where('user_id', '=', $user_id)->pluck('product_id') : collect();
         $data['content']            = HomePage::where('status', '=', 1)->first();
         $data['parentCats']         = Category::select('id', 'category_name', 'slug')->where('status', '=', 1)->where('parent_id', '=', 0)->get();
         $data['childCats']          = Category::select('id', 'parent_id', 'category_name', 'slug')->where('status', '=', 1)->where('parent_id', '>', 0)->get()->groupBy('parent_id');
