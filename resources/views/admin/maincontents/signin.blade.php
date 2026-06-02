@@ -1,3 +1,14 @@
+<style>
+  .auth-password-toggle {
+    cursor: pointer;
+  }
+  .auth-password-toggle:hover,
+  .auth-password-toggle:focus {
+    background: #efe3cf;
+    color: var(--auth-brown-dark);
+  }
+</style>
+
 <section class="auth-shell">
   <aside class="auth-brand-panel">
     <div>
@@ -47,6 +58,7 @@
           <div class="input-group has-validation">
             <span class="input-group-text"><i class="fas fa-lock"></i></span>
             <input type="password" name="password" class="form-control" id="password" autocomplete="current-password" required>
+            <button type="button" class="input-group-text auth-password-toggle" data-password-toggle data-password-target="password" aria-label="Show password" aria-pressed="false"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
           </div>
         </div>
         <div class="col-12">
@@ -60,3 +72,19 @@
     </div>
   </div>
 </section>
+
+<script>
+  document.querySelectorAll('[data-password-toggle]').forEach(function (toggle) {
+    toggle.addEventListener('click', function () {
+      var input = document.getElementById(toggle.getAttribute('data-password-target'));
+      var icon = toggle.querySelector('i');
+      var showPassword = input.type === 'password';
+
+      input.type = showPassword ? 'text' : 'password';
+      toggle.setAttribute('aria-label', showPassword ? 'Hide password' : 'Show password');
+      toggle.setAttribute('aria-pressed', showPassword ? 'true' : 'false');
+      icon.classList.toggle('fa-eye', !showPassword);
+      icon.classList.toggle('fa-eye-slash', showPassword);
+    });
+  });
+</script>
