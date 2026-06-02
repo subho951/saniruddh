@@ -13,6 +13,7 @@ use App\Models\Category;
 use App\Models\Admin;
 use App\Models\User;
 use App\Models\UserAccess;
+use App\Models\EmailLog;
 use App\Models\OrderDetail;
 use App\Models\UserWishlist;
 use Session;
@@ -64,6 +65,37 @@ class Controller extends BaseController
             report($exception);
             return false;
         }
+    }
+    protected function sendOrderConfirmationEmails($order)
+    {
+        if (! $order) {
+            logger()->warning('Order confirmation email skipped because the order was not found.');
+            return;
+        }
+
+        $generalSetting = GeneralSetting::find('1');
+        if (! $generalSetting) {
+            logger()->warning('Order confirmation email skipped because general settings were not found.', [
+                'order_id' => data_get($order, 'id'),
+            ]);
+            return;
+        }
+
+        $customerEmail = trim((string) (data_get($order, 'cust_email') ?: data_get($order, 'b_email')));
+        $adminEmail = trim((string) $generalSetting->system_email);
+        $subject = 'Order Confirmation - Your Order with '.$generalSetting->site_name.' ['.$order->order_no.'] has been successfully placed!';
+        $message = view('email-templates.order-place', ['getOrder' => $order])->render();
+
+        foreach (array_unique(array_filter([$adminEmail, $customerEmail])) as $email) {
+            $this->sendMail($email, $subject, $message);
+        }
+
+        EmailLog::insertGetId([
+            'name' => trim($order->b_fname.' '.$order->b_lname),
+            'email' => $customerEmail,
+            'subject' => $subject,
+            'message' => $message,
+        ]);
     }
     // single file upload
     public function upload_single_file($fieldName, $fileName, $uploadedpath, $uploadType, $tempFile = '')

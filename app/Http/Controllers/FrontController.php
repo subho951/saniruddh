@@ -1549,6 +1549,7 @@ class FrontController extends Controller
                 if ($selectedPaymentMethod == 'COD') {
                     OrderDetail::where('order_id', '=', $order_id)->update(['is_cart' => 0]);
                     $request->session()->forget(['is_coupon', 'sess_coupon_code', 'sess_disc_type']);
+                    $this->sendOrderConfirmationEmails(Order::where('id', '=', $order_id)->first());
                     return redirect(url('order-success/' . Helper::encoded($order_id)))->with('success_message', 'Order placed successfully. Please pay cash on delivery.');
                 } elseif ($selectedPaymentMethod == 'STRIPE') {
                     $request->session()->forget(['is_coupon', 'sess_coupon_code', 'sess_disc_type']);
@@ -1688,23 +1689,7 @@ class FrontController extends Controller
                 file_put_contents($pdfFilePath, $output);
                 Order::where('id', '=', $order_id)->update(['invoice_pdf' => $filename]);
                 /* generate inspection pdf & save it to directory */
-                /* email functionality */
-                $mailData['getOrder']       = Order::where('id', '=', $order_id)->first();
-                $message                    = view('email-templates.order-place', $mailData);
-                $generalSetting             = GeneralSetting::find('1');
-                $subject                    = 'Order Confirmation - Your Order with ' . $generalSetting->site_name . ' [' . $mailData['getOrder']->order_no . '] has been successfully placed!';
-                $this->sendMail($generalSetting->system_email, $subject, $message);
-                $this->sendMail((($getOrder) ? $getOrder->cust_email : ''), $subject, $message);
-                /* email functionality */
-                /* email log save */
-                $postData2 = [
-                    'name'                  => $mailData['getOrder']->b_fname . ' ' . $mailData['getOrder']->b_lname,
-                    'email'                 => $mailData['getOrder']->cust_email,
-                    'subject'               => $subject,
-                    'message'               => $message
-                ];
-                EmailLog::insertGetId($postData2);
-                /* email log save */
+                $this->sendOrderConfirmationEmails(Order::where('id', '=', $order_id)->first());
                 return redirect(url('order-success/' . Helper::encoded($order_id)))->with('success_message', 'Order placed & payment has been successfully completed !!!');
             } else {
                 // echo "Transaction Failed\n";
@@ -1888,22 +1873,7 @@ class FrontController extends Controller
                     ];
                     Order::where('id', '=', $order_id)->update($userSubscriptionData);
                     OrderDetail::where('order_id', '=', $order_id)->update(['is_cart' => 0]);
-                    /* email functionality */
-                    $mailData['getOrder']       = Order::where('id', '=', $order_id)->first();
-                    $message                    = view('email-templates.order-place', $mailData);
-                    $generalSetting             = GeneralSetting::find('1');
-                    $subject                    = 'Order Confirmation - Your Order with ' . $generalSetting->site_name . ' [' . $mailData['getOrder']->order_no . '] has been successfully placed!';
-                    $this->sendMail($generalSetting->system_email, $subject, $message);
-                    /* email functionality */
-                    /* email log save */
-                    $postData2 = [
-                        'name'                  => $mailData['getOrder']->b_fname . ' ' . $mailData['getOrder']->b_lname,
-                        'email'                 => $mailData['getOrder']->b_email,
-                        'subject'               => $subject,
-                        'message'               => $message
-                    ];
-                    EmailLog::insertGetId($postData2);
-                    /* email log save */
+                    $this->sendOrderConfirmationEmails(Order::where('id', '=', $order_id)->first());
                     return redirect(url('order-success/' . Helper::encoded($order_id)))->with('success_message', 'Order Placed & Payment Completed Successfully !!!');
                 } else {
                     return redirect(url('order-success/' . Helper::encoded($order_id)))->with('error_message', 'Something Went Wrong In Order Placed !!!');
@@ -2036,23 +2006,7 @@ class FrontController extends Controller
             Order::where('id', '=', $order_id)->update(['invoice_pdf' => $filename]);
             /* generate inspection pdf & save it to directory */
 
-            /* email functionality */
-            $mailData['getOrder']       = Order::where('id', '=', $order_id)->first();
-            $message                    = view('email-templates.order-place', $mailData);
-            $generalSetting             = GeneralSetting::find('1');
-            $subject                    = 'Order Confirmation - Your Order with ' . $generalSetting->site_name . ' [' . $mailData['getOrder']->order_no . '] has been successfully placed!';
-            $this->sendMail($generalSetting->system_email, $subject, $message);
-            $this->sendMail($mailData['getOrder']->b_email, $subject, $message);
-            /* email functionality */
-            /* email log save */
-            $postData2 = [
-                'name'                  => $mailData['getOrder']->b_fname . ' ' . $mailData['getOrder']->b_lname,
-                'email'                 => $mailData['getOrder']->b_email,
-                'subject'               => $subject,
-                'message'               => $message
-            ];
-            EmailLog::insertGetId($postData2);
-            /* email log save */
+            $this->sendOrderConfirmationEmails(Order::where('id', '=', $order_id)->first());
             return redirect(url('order-success/' . Helper::encoded($order_id)))->with('success_message', 'Order Placed & Payment Completed Successfully !!!');
         } else {
             return redirect(url('order-success/' . Helper::encoded($order_id)))->with('error_message', 'Something Went Wrong In Order Placed !!!');

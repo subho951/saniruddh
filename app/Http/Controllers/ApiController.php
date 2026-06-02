@@ -4327,6 +4327,9 @@ class ApiController extends Controller
                         /* view analytics track */
                         $apiMessage         = 'Order Placed Successfully !!!';
                         $getOrder           = Order::where('id', '=', $order_id)->first();
+                        if (strtoupper((string) $payment_method) == 'COD') {
+                            $this->sendOrderConfirmationEmails($getOrder);
+                        }
                         $apiResponse[]      = [
                             'order_id'                  => $order_id,
                             'order_no'                  => $order_no,
@@ -4518,22 +4521,7 @@ class ApiController extends Controller
                                     }
                                 /* order details items */
                                 if($getOrder){
-                                    /* email functionality */
-                                        $mailData['getOrder']       = Order::where('id', '=', $order_id)->first();
-                                        $message                    = view('email-templates.order-place', $mailData);                    
-                                        $generalSetting             = GeneralSetting::find('1');
-                                        $subject                    = 'Order Confirmation - Your Order with '.$generalSetting->site_name.' ['.$mailData['getOrder']->order_no.'] has been successfully placed!';
-                                        $this->sendMail($generalSetting->system_email, $subject, $message);
-                                    /* email functionality */
-                                    /* email log save */
-                                        $postData2 = [
-                                            'name'                  => $mailData['getOrder']->b_fname.' '.$mailData['getOrder']->b_lname,
-                                            'email'                 => $mailData['getOrder']->b_email,
-                                            'subject'               => $subject,
-                                            'message'               => $message
-                                        ];
-                                        EmailLog::insertGetId($postData2);
-                                    /* email log save */
+                                    $this->sendOrderConfirmationEmails(Order::where('id', '=', $order_id)->first());
                         
                                     $apiResponse                = [
                                         'order_id'              => $getOrder->id,
