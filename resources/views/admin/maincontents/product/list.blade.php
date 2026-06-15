@@ -593,6 +593,7 @@ $controllerRoute = $module['controller_route'];
                                     <div class="product-items-descr">
                                        <div class="items-descr-name">
                                        <a href="<?=url('admin/' . $controllerRoute . '/edit/'.Helper::encoded($row->id))?>"><h2><?=$row->name?></h2></a>
+                                       <?php if(!empty($row->color)){?><small>Color: <?=$row->color?></small><?php }?>
                                        </div>
                                        <div class="items-descr-rating-setting">
                                           <div class="items-descr-rating">
@@ -668,6 +669,7 @@ $controllerRoute = $module['controller_route'];
             							<div class="p-3">
                                     <a href="<?=url('admin/' . $controllerRoute . '/edit/'.Helper::encoded($row->id))?>">
                                        <h2><?=$row->name?></h2>
+                                       <?php if(!empty($row->color)){?><p class="mb-1">Color: <?=$row->color?></p><?php }?>
                                        <div class="grid-stoke-details">
                                        <p><?=$row->sub_category_name?></p>
                                        <p>$<?=number_format($row->discounted_price,2)?> <span style="text-decoration: line-through;">$<?=number_format($row->base_price,2)?></span> <span>(<?=$row->price_percentage?>)</span></p>

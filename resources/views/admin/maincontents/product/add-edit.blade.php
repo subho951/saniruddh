@@ -83,6 +83,7 @@ $controllerRoute = $module['controller_route'];
          $main_category                = $row->main_category;
          $sub_category                 = $row->sub_category;
          $name                         = $row->name;
+         $color                        = $row->color;
          $base_price                   = $row->base_price;
          $price_percentage             = $row->price_percentage;
          $markup_price                 = $row->markup_price;
@@ -90,7 +91,6 @@ $controllerRoute = $module['controller_route'];
          $discounted_price             = $row->discounted_price;
          $cover_image                  = $row->cover_image;
          $short_description            = $row->short_description;
-         $long_description             = $row->long_description;
          $is_personalization           = $row->is_personalization;
          $personalization_instruction  = $row->personalization_instruction;
          $product_sku                  = $row->product_sku;
@@ -101,8 +101,6 @@ $controllerRoute = $module['controller_route'];
          $product_width                = $row->product_width;
          $product_height               = $row->product_height;
          $is_feature                   = $row->is_feature;
-         $product_video_code           = $row->product_video_code;
-         $product_video                = $row->product_video;
          $tags                         = $row->tags;
          $materialData                 = (($row->materials != '')?json_decode($row->materials):[]);
          $shipping_policy_id           = $row->shipping_policy_id;
@@ -128,6 +126,7 @@ $controllerRoute = $module['controller_route'];
          $main_category                = (( $GetParentCategory)? $GetParentCategory->parent_id:0);
          $sub_category                 = $sessionSubCategory;
          $name                         = '';
+         $color                        = '';
          $base_price                   = '';
          $price_percentage             = 0;
          $markup_price                 = '';
@@ -135,7 +134,6 @@ $controllerRoute = $module['controller_route'];
          $discounted_price             = '';
          $cover_image                  = '';
          $short_description            = '';
-         $long_description             = '';
          $is_personalization           = 0;
          $personalization_instruction  = '';
          $product_sku                  = '';
@@ -146,8 +144,6 @@ $controllerRoute = $module['controller_route'];
          $product_width                = 0;
          $product_height               = 0;
          $is_feature                   = 0;
-         $product_video_code           = '';
-         $product_video                = '';
          $tags                         = '';
          $materialData                 = [];
          $shipping_policy_id           = '';
@@ -167,7 +163,30 @@ $controllerRoute = $module['controller_route'];
       } else {
          $GetParentCategory = Category::select('id', 'category_name')->where('id', '=', $main_category)->first();
       }
-      $attrs = Attribute::select('id', 'name')->where('status', '=', 1)->where('parent_category', '=', $main_category)->where('sub_category_id', '=', $sub_category)->get();
+      $attrs = Attribute::select('id', 'name')
+         ->where('status', '=', 1)
+         ->where('parent_category', '=', $main_category)
+         ->where('sub_category_id', '=', $sub_category)
+         ->whereRaw('LOWER(name) = ?', ['size'])
+         ->get();
+      $colorAttribute = Attribute::select('id')
+         ->where('status', '=', 1)
+         ->where('parent_category', '=', $main_category)
+         ->where('sub_category_id', '=', $sub_category)
+         ->whereRaw('LOWER(name) = ?', ['color'])
+         ->first();
+      $colorValues = $colorAttribute
+         ? AttributeValue::select('id', 'attr_value')->where('status', 1)->where('attr_id', $colorAttribute->id)->orderBy('attr_value')->get()
+         : collect();
+      $selectedColorId = 0;
+      if($product_id > 0 && $colorAttribute){
+         $selectedColorId = (int) ProductAttribute::where('product_id', $product_id)
+            ->where('product_attribute_id', $colorAttribute->id)
+            ->value('product_attribute_value_id');
+      }
+      if($selectedColorId <= 0 && $color != '' && $colorAttribute){
+         $selectedColorId = (int) AttributeValue::where('attr_id', $colorAttribute->id)->where('attr_value', $color)->value('id');
+      }
       ?>
       <div class="row">
          <div class="col-lg-12">
@@ -239,26 +258,10 @@ $controllerRoute = $module['controller_route'];
                      <?php } }?>
                   </div>
                </div>
-               <div class="col-lg-6 col-md-6 mb-3">
-                  <h5 class="sub-title">Product Video</h5>
-                  <input type="text" name="product_video" class="form-control" id="product_video" value="<?=$product_video?>">
-               </div>
-               <div class="col-lg-6 col-md-6 mb-3">
-                  <?php if($product_video != ''){?>
-                     <p class="mt-3">
-                        <iframe width="560" height="315" src="https://www.youtube.com/embed/<?=$product_video_code?>" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                     </p>
-                  <?php }?>
-               </div>
                <div class="col-lg-12 col-md-12 mb-3">
                   <h5 class="sub-title">Short Description</h5>
                   <p class="mb-3">What makes your item special? Buyers will only see the first few lines unless they expand the description.</p>
                   <textarea class="form-control" id="ckeditor11" name="short_description"><?=$short_description?></textarea>
-               </div>
-               <div class="col-lg-12 col-md-12 mb-3">
-                  <h5 class="sub-title">Long Description</h5>
-                  <p class="mb-3">What makes your item special? Buyers will only see the first few lines unless they expand the description.</p>
-                  <textarea class="form-control" id="ckeditor1" name="long_description"><?=$long_description?></textarea>
                </div>
             </div>
             <div class="row align-items-center mb-3">
@@ -338,6 +341,16 @@ $controllerRoute = $module['controller_route'];
                </div>
             </div>
             <div class="row">
+               <div class="col-lg-3 mb-3">
+                  <label for="product_color_id" class="form-label">Color<span style="color:red;">*</span></label>
+                  <select class="form-control" name="product_color_id" id="product_color_id" required>
+                     <option value="">Select Color</option>
+                     <?php foreach($colorValues as $colorValue){?>
+                        <option value="<?=$colorValue->id?>" <?=(($selectedColorId === (int) $colorValue->id)?'selected':'')?>><?=$colorValue->attr_value?></option>
+                     <?php }?>
+                  </select>
+                  <small class="text-muted">Create a separate product for each color.</small>
+               </div>
                <div class="col-lg-3 mb-3" id="sku-row" <?=(($product_sku != '')?'':'style="display: none;"')?>>
                   <label for="product_sku" class="form-label">SKU<span style="color:red;">*</span></label>
                   <input type="text" class="form-control" name="product_sku" id="product_sku" placeholder="SKU" value="<?=$product_sku?>" required>
@@ -350,7 +363,10 @@ $controllerRoute = $module['controller_route'];
          </div>
       </div>
       <?php
-      $getAttributeCount = Attribute::where('status', '=', 1)->where('sub_category_id', '=', $sub_category)->count();
+      $getAttributeCount = Attribute::where('status', '=', 1)
+         ->where('sub_category_id', '=', $sub_category)
+         ->whereRaw('LOWER(name) = ?', ['size'])
+         ->count();
       if($getAttributeCount > 0){
       ?>
          <div class="card variations-new" id="variations-new">
@@ -358,12 +374,12 @@ $controllerRoute = $module['controller_route'];
                <div class="row">
                   <div class="col-lg-8 col-md-8 col-sm-8 mb-3">
                      <h2 class="card-title ">
-                        Variations 
+                        Size Variations
                      </h2>
-                     <p>Choose attributes for variation first.</p>
+                     <p>Choose the available sizes. Every size uses the product price above.</p>
                   </div>
                   <div class="col-lg-4 col-md-4 col-sm-4 mb-3">
-                     <a class="new-btn-style" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#variationModal">Manage Variation</a>
+                     <a class="new-btn-style" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#variationModal">Manage Sizes</a>
                   </div>
                   <div class="col-lg-12 col-md-12 col-sm-12 mb-3" id="variationTable">
                      
@@ -701,7 +717,7 @@ $controllerRoute = $module['controller_route'];
   <div class="modal-dialog">
       <div class="modal-content">
          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">What type of variation is it?</h5>
+            <h5 class="modal-title" id="exampleModalLabel">Select available sizes</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
          </div>
          <div class="modal-body">
@@ -729,7 +745,7 @@ $controllerRoute = $module['controller_route'];
             <input type="hidden" id="attrIds" value="<?=implode(',', $attrIds)?>">
          </div>
          <div class="modal-footer">
-            <button type="button" class="new-btn-style" id="getValuesButton">Generate Variation</button>
+            <button type="button" class="new-btn-style" id="getValuesButton">Generate Size Variations</button>
          </div>
       </div>
    </div>
@@ -1072,16 +1088,5 @@ $controllerRoute = $module['controller_route'];
          return false;
       }
       return true;
-   }
-   function calculateDiscountedPrice(counter, price, type, disc_amt){
-      var base_price       = parseFloat(price);
-      var price_percentage = type;
-      var discount_amount  = parseFloat(disc_amt);
-      if(price_percentage == 'PERCENTAGE'){
-         var discounted_price     = (base_price - ((base_price * discount_amount) / 100));
-      } else {
-         var discounted_price     = (base_price - discount_amount);
-      }
-      $('#discounted_price' + counter).val(discounted_price);
    }
 </script>

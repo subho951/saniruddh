@@ -56,7 +56,6 @@
                         <form action="{{ url('add-to-cart') }}" method="post" id="add-to-cart-form">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <input type="hidden" name="product_price" id="product-price-input" value="{{ $product->discounted_price }}">
                             <div class="product-info">
                                 <div class="single-info">
                                     <span class="label">Availability:</span>
@@ -66,6 +65,12 @@
                                     <span class="label">Product Code:</span>
                                     <span class="value">{{ $product->product_sku }}</span>
                                 </div>
+                                @if($product->color)
+                                    <div class="single-info">
+                                        <span class="label">Color:</span>
+                                        <span class="value">{{ $product->color }}</span>
+                                    </div>
+                                @endif
                                 @foreach($variations as $variation)
                                     <div class="single-info storefront-variation">
                                         <label class="label" for="variation-{{ $variation['attr_id'] }}">{{ $variation['attr_name'] }}:</label>
@@ -101,22 +106,15 @@
         </div>
 
         <div class="product-details-tabs section-padding">
-            <ul class="nav nav-justified">
-                <li class="nav-item"><a class="active" data-bs-toggle="tab" href="#description">Description</a></li>
-                <li class="nav-item"><a data-bs-toggle="tab" href="#information">Information</a></li>
-            </ul>
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="description">
-                    <div class="product-description">{!! $product->long_description !!}</div>
-                </div>
-                <div class="tab-pane fade" id="information">
-                    <div class="information">
+            <div class="information">
+                <div class="section-title"><h2 class="title">Product Information</h2></div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="information-content">
                                     <h4 class="title">Product Information</h4>
                                     <ul>
                                         <li>SKU: {{ $product->product_sku }}</li>
+                                        @if($product->color)<li>Color: {{ $product->color }}</li>@endif
                                         <li>Made by: {{ $product->who_made_it }}</li>
                                         <li>Shipping: {{ $product->shipping_info }}</li>
                                         <li>Cash on Delivery: Available</li>
@@ -134,8 +132,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -162,37 +158,3 @@
         @endif
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.product-variation-select').forEach(function (select) {
-        select.addEventListener('change', function () {
-            if (!this.value) {
-                return;
-            }
-
-            fetch('{{ url('get-variation-price') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    product_id: '{{ $product->id }}',
-                    parent_attr_id: this.dataset.parentAttribute,
-                    attr_val_id: this.value
-                })
-            })
-            .then(function (response) { return response.json(); })
-            .then(function (payload) {
-                var price = payload.data ? payload.data.discounted_price : payload.discounted_price;
-                if (price) {
-                    document.getElementById('product-price').textContent = price;
-                    document.getElementById('product-price-input').value = price;
-                }
-            });
-        });
-    });
-});
-</script>

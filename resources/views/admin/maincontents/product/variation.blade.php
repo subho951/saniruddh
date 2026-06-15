@@ -23,15 +23,11 @@ if(!empty($attributes)){
     }
 }
 $attr_count         = count($parentAttrs);
-$variation_price    = [];
-$variation_discounted_price    = [];
 $variation_sku      = [];
 $variation_qty      = [];
-$getVariationDatas = ProductVariation::select('price', 'discounted_price', 'sku', 'qty')->where('product_id', '=', $product_id)->get();
+$getVariationDatas = ProductVariation::select('sku', 'qty')->where('product_id', '=', $product_id)->get();
 if($getVariationDatas){
     foreach($getVariationDatas as $getVariationData){
-        $variation_price[]    = $getVariationData->price;
-        $variation_discounted_price[]    = $getVariationData->discounted_price;
         $variation_sku[]      = $getVariationData->sku;
         $variation_qty[]      = $getVariationData->qty;
     }
@@ -47,8 +43,6 @@ if($getVariationDatas){
                 <th><?=$parentAttr['attr_name']?></th>
             <?php } }?>
             <th>SKU</th>
-            <th>Price</th>
-            <th>Discounted Price</th>
             <th>Qty</th>
             <th>Visible</th>
         </tr>
@@ -78,23 +72,13 @@ if($getVariationDatas){
                     if($product_id == 0){
                         $sku    = $product_sku;
                         $qty    = $product_qty;
-                        $price  = $base_price;
-                        $discountedPrice  = $discounted_price;
                     } else {
                         $sku    = ((count($variation_sku) > 0)?$variation_sku[$v]:$product_sku);
                         $qty    = ((count($variation_qty) > 0)?$variation_qty[$v]:$product_qty);
-                        $price  = ((count($variation_price) > 0)?$variation_price[$v]:$base_price);
-                        $discountedPrice  = ((count($variation_discounted_price) > 0)?(($variation_discounted_price[$v] > 0)?$variation_discounted_price[$v]:$discounted_price):$discounted_price);
                     }
                     ?>
                     <td>
                         <input type="text" name="variationSKU[]" class="form-control" value="<?=$sku?>" required>
-                    </td>
-                    <td>
-                        <input type="text" name="variationPrice[]" class="form-control" value="<?=$price?>" oninput="calculateDiscountedPrice(<?=$v?>, this.value, '<?=$price_percentage?>', <?=$discount_amount?>);" required>
-                    </td>
-                    <td>
-                        <input type="text" name="variationDiscountedPrice[]" class="form-control" id="discounted_price<?=$v?>" value="<?=$discountedPrice?>" required>
                     </td>
                     <td>
                         <input type="text" name="variationQTY[]" class="form-control" value="<?=$qty?>" required>

@@ -17,6 +17,7 @@ class ProductSchemaService
             "image"         => $productImage,
             "description"   => strip_tags($product->short_description),
             "sku"           => $product->product_sku,
+            "color"         => $product->color,
             // "brand" => [
             //     "@type" => "Brand",
             //     "name"  => $product->brand->name ?? null,

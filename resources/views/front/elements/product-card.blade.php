@@ -2,6 +2,7 @@
     $cardProductId = data_get($cardProduct, 'id');
     $cardProductSlug = data_get($cardProduct, 'slug');
     $cardProductName = data_get($cardProduct, 'name');
+    $cardProductColor = data_get($cardProduct, 'color');
     $cardProductImage = data_get($cardProduct, 'cover_image');
     $cardProductBasePrice = (float) data_get($cardProduct, 'base_price', 0);
     $cardProductPrice = (float) data_get($cardProduct, 'discounted_price', $cardProductBasePrice);
@@ -27,6 +28,7 @@
             </div>
         </div>
         <h3 class="product-title"><a href="{{ $cardProductUrl }}">{{ $cardProductName }}</a></h3>
+        @if($cardProductColor)<div class="storefront-product-color">Color: {{ $cardProductColor }}</div>@endif
         <div class="product-price">
             @if($cardProductBasePrice > $cardProductPrice)
                 <span class="old-price"><i class="fa fa-inr"></i>{{ number_format($cardProductBasePrice, 2) }}</span>

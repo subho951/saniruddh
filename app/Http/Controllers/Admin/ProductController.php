@@ -515,18 +515,15 @@ class ProductController extends Controller
                     'base_price'           => 'required',
                     'product_sku'          => 'required',
                     'product_qty'          => 'required',
+                    'product_color_id'     => 'required|integer',
                 ];
                 if($this->validate($request, $rules)){
                     $sub_category = $product_session_data['sub_category'];
-                    $getParentCategory = Category::select('id', 'category_name', 'parent_id')->where('id', '=', $sub_category)->first();
-                    if($postData['product_video'] != ''){
-                        $product_video      = $postData['product_video'];
-                        $video_array = explode("watch?v=", $product_video);
-                        $product_video_code = $video_array[1];
-                    } else {
-                        $product_video_code = '';
-                        $product_video      = '';
+                    $productColor = $this->productColorValue($sub_category, (int) $postData['product_color_id']);
+                    if (! $productColor) {
+                        return redirect()->back()->withInput()->with('error_message', 'Please select a valid product color.');
                     }
+                    $getParentCategory = Category::select('id', 'category_name', 'parent_id')->where('id', '=', $sub_category)->first();
                     $generalSetting = GeneralSetting::find(1);
                     if($postData['shipping_type'] == 'FREE'){
                         $shipping_rate = 0;
@@ -545,6 +542,7 @@ class ProductController extends Controller
                         'main_category'                 => (($getParentCategory)?$getParentCategory->parent_id:0),
                         'sub_category'                  => $sub_category,
                         'name'                          => $postData['name'],
+                        'color'                         => $productColor->attr_value,
                         'base_price'                    => $postData['base_price'],
                         'price_percentage'              => $postData['price_percentage'],
                         'markup_price'                  => $postData['base_price'],
@@ -552,7 +550,7 @@ class ProductController extends Controller
                         'discounted_price'              => $postData['discounted_price'],
                         'slug'                          => Helper::clean($postData['name']),
                         'short_description'             => $postData['short_description'],
-                        'long_description'              => $postData['long_description'],
+                        'long_description'              => null,
                         'is_personalization'            => (($postData['personalization_instruction'] != '')?1:0),
                         'personalization_instruction'   => $postData['personalization_instruction'],
                         'product_sku'                   => $postData['product_sku'],
@@ -563,8 +561,8 @@ class ProductController extends Controller
                         'product_width'                 => $postData['product_width'],
                         'product_height'                => $postData['product_height'],
                         'is_feature'                    => ((array_key_exists('is_feature', $postData))?1:0),
-                        'product_video_code'            => $product_video_code,
-                        'product_video'                 => $product_video,
+                        'product_video_code'            => null,
+                        'product_video'                 => null,
                         'tags'                          => $postData['tags'],
                         'materials'                     => ((array_key_exists('materials', $postData))?json_encode($postData['materials']):[]),
                         'shipping_policy_id'            => 0,
@@ -606,6 +604,7 @@ class ProductController extends Controller
                             }
                         }
                     /* attribute */
+                    $this->syncProductColorAttribute($product_id, $productColor);
                     /* variation */
                         $totQTY = 0;
                         if(array_key_exists("attr_count",$postData)){
@@ -616,14 +615,12 @@ class ProductController extends Controller
                             if($attr_count > 0){
                                 $variationSKU       = $postData['variationSKU'];
                                 $variationQTY       = $postData['variationQTY'];
-                                $variationPrice     = $postData['variationPrice'];
-                                $variationDiscountedPrice     = $postData['variationDiscountedPrice'];
-                                if(!empty($variationPrice)){
-                                    for($v=0; $v<count($variationPrice); $v++){
+                                if(!empty($variationQTY)){
+                                    for($v=0; $v<count($variationQTY); $v++){
                                         $fields11 = [
                                             'product_id'    => $product_id,
-                                            'price'         => $variationPrice[$v],
-                                            'discounted_price'         => $variationDiscountedPrice[$v],
+                                            'price'         => $postData['base_price'],
+                                            'discounted_price' => $postData['discounted_price'],
                                             'sku'           => $variationSKU[$v],
                                             'qty'           => $variationQTY[$v],
                                             'status'        => ((array_key_exists("is_visible" . $v,$postData))?1:0),
@@ -747,7 +744,12 @@ class ProductController extends Controller
 
             $parent_category = $data['row']->main_category;
             $sub_category_id = $data['row']->sub_category;
-            $getAttrIds  = Attribute::select('id')->where('status', '=', 1)->where('parent_category', '=', $parent_category)->where('sub_category_id', '=', $sub_category_id)->get();
+            $getAttrIds  = Attribute::select('id')
+                ->where('status', '=', 1)
+                ->where('parent_category', '=', $parent_category)
+                ->where('sub_category_id', '=', $sub_category_id)
+                ->whereRaw('LOWER(name) = ?', ['size'])
+                ->get();
             $attrIds = [];
             if($getAttrIds){
                 foreach($getAttrIds as $getAttrId){
@@ -757,7 +759,12 @@ class ProductController extends Controller
             $data['attr_ids'] = json_encode($attrIds);
 
             $dropdownValues = [];
-            $getProductparentAttrs = VariationAttribute::select('parent_attr_id')->where('status', '=', 1)->where('product_id', '=', $id)->groupBy('parent_attr_id')->get();
+            $getProductparentAttrs = VariationAttribute::select('parent_attr_id')
+                ->where('status', '=', 1)
+                ->where('product_id', '=', $id)
+                ->whereIn('parent_attr_id', $attrIds)
+                ->groupBy('parent_attr_id')
+                ->get();
             if($getProductparentAttrs){
                 foreach($getProductparentAttrs as $getProductparentAttr){
                     $parent_attr_id = $getProductparentAttr->parent_attr_id;
@@ -784,19 +791,16 @@ class ProductController extends Controller
                     'base_price'           => 'required',
                     'product_sku'          => 'required',
                     'product_qty'          => 'required',
+                    'product_color_id'     => 'required|integer',
                 ];
                 if($this->validate($request, $rules)){
                     $product_session_data   = session('product_session_data');
                     $sub_category           = $postData['sub_category'];
-                    $getParentCategory      = Category::select('id', 'category_name', 'parent_id')->where('id', '=', $sub_category)->first();
-                    if($postData['product_video'] != ''){
-                        $product_video      = $postData['product_video'];
-                        $video_array = explode("watch?v=", $product_video);
-                        $product_video_code = $video_array[1];
-                    } else {
-                        $product_video_code = '';
-                        $product_video      = '';
+                    $productColor = $this->productColorValue($sub_category, (int) $postData['product_color_id']);
+                    if (! $productColor) {
+                        return redirect()->back()->withInput()->with('error_message', 'Please select a valid product color.');
                     }
+                    $getParentCategory      = Category::select('id', 'category_name', 'parent_id')->where('id', '=', $sub_category)->first();
                     $generalSetting = GeneralSetting::find(1);
                     if($postData['shipping_type'] == 'FREE'){
                         $shipping_rate = 0;
@@ -815,6 +819,7 @@ class ProductController extends Controller
                         'main_category'                 => (($getParentCategory)?$getParentCategory->parent_id:0),
                         'sub_category'                  => $sub_category,
                         'name'                          => $postData['name'],
+                        'color'                         => $productColor->attr_value,
                         'base_price'                    => $postData['base_price'],
                         'price_percentage'              => $postData['price_percentage'],
                         'markup_price'                  => $postData['base_price'],
@@ -822,7 +827,7 @@ class ProductController extends Controller
                         'discounted_price'              => $postData['discounted_price'],
                         'slug'                          => Helper::clean($postData['name']),
                         'short_description'             => $postData['short_description'],
-                        'long_description'              => $postData['long_description'],
+                        'long_description'              => null,
                         'is_personalization'            => (($postData['personalization_instruction'] != '')?1:0),
                         'personalization_instruction'   => $postData['personalization_instruction'],
                         'product_sku'                   => $postData['product_sku'],
@@ -833,8 +838,8 @@ class ProductController extends Controller
                         'product_width'                 => $postData['product_width'],
                         'product_height'                => $postData['product_height'],
                         'is_feature'                    => ((array_key_exists('is_feature', $postData))?1:0),
-                        'product_video_code'            => $product_video_code,
-                        'product_video'                 => $product_video,
+                        'product_video_code'            => null,
+                        'product_video'                 => null,
                         'tags'                          => $postData['tags'],
                         'materials'                     => ((array_key_exists('materials', $postData))?json_encode($postData['materials']):[]),
                         'shipping_policy_id'            => 0,
@@ -876,6 +881,7 @@ class ProductController extends Controller
                             }
                         }
                     /* attribute */
+                    $this->syncProductColorAttribute($product_id, $productColor);
                     /* variation */
                         $totQTY = 0;
                         // Helper::pr($postData);
@@ -886,14 +892,12 @@ class ProductController extends Controller
                             if($attr_count > 0){
                                 $variationSKU       = $postData['variationSKU'];
                                 $variationQTY       = $postData['variationQTY'];
-                                $variationPrice     = $postData['variationPrice'];
-                                $variationDiscountedPrice     = $postData['variationDiscountedPrice'];
-                                if(!empty($variationPrice)){
-                                    for($v=0; $v<count($variationPrice); $v++){
+                                if(!empty($variationQTY)){
+                                    for($v=0; $v<count($variationQTY); $v++){
                                         $fields11 = [
                                             'product_id'    => $product_id,
-                                            'price'         => $variationPrice[$v],
-                                            'discounted_price'         => $variationDiscountedPrice[$v],
+                                            'price'         => $postData['base_price'],
+                                            'discounted_price' => $postData['discounted_price'],
                                             'sku'           => $variationSKU[$v],
                                             'qty'           => $variationQTY[$v],
                                             'status'        => ((array_key_exists("is_visible" . $v,$postData))?1:0),
@@ -1201,7 +1205,7 @@ class ProductController extends Controller
 
         $data               = [];
         $postData           = $request->all();
-        $attrIds            = explode(",", $postData['attrIds']);
+        $attrIds            = $this->sizeAttributeIds(explode(",", $postData['attrIds']));
         $dropdownValues     = $postData['dropdownValues'];
         $base_price         = $postData['base_price'];
         $price_percentage   = $postData['price_percentage'];
@@ -1252,7 +1256,7 @@ class ProductController extends Controller
 
         $data               = [];
         $postData           = $request->all();
-        $attrIds            = json_decode($postData['attrIds']);
+        $attrIds            = $this->sizeAttributeIds(json_decode($postData['attrIds'], true) ?: []);
         $dropdownValues     = json_decode($postData['dropdownValues'], true);
         $base_price         = $postData['base_price'];
         $price_percentage   = $postData['price_percentage'];
@@ -1262,7 +1266,7 @@ class ProductController extends Controller
         $product_qty        = $postData['product_qty'];
         $product_id         = $postData['product_id'];
         $attributes         = [];
-        if(!empty($attributes)){
+        if(!empty($attrIds) && !empty($dropdownValues)){
             if(!empty($attrIds)){
                 $m=1;
                 for($k=0;$k<count($attrIds);$k++){
@@ -1281,7 +1285,12 @@ class ProductController extends Controller
             $getProVariations = ProductVariation::select('id')->where('status', '=', 1)->where('product_id', '=', $product_id)->get();
             if($getProVariations){
                 foreach($getProVariations as $getProVariation){
-                    $getVariationAttrs = VariationAttribute::select('parent_attr_id', 'attribute_id')->where('status', '=', 1)->where('product_id', '=', $product_id)->where('product_variation_id', '=', $getProVariation->id)->get();
+                    $getVariationAttrs = VariationAttribute::select('parent_attr_id', 'attribute_id')
+                        ->where('status', '=', 1)
+                        ->where('product_id', '=', $product_id)
+                        ->where('product_variation_id', '=', $getProVariation->id)
+                        ->whereIn('parent_attr_id', $attrIds)
+                        ->get();
                     $m=1;
                     if($getVariationAttrs){
                         foreach($getVariationAttrs as $getVariationAttr){
@@ -1319,6 +1328,37 @@ class ProductController extends Controller
             $result = $temp;
         }
         return $result;
+    }
+    private function sizeAttributeIds(array $attributeIds): array
+    {
+        return Attribute::whereIn('id', array_filter(array_map('intval', $attributeIds)))
+            ->where('status', 1)
+            ->whereRaw('LOWER(name) = ?', ['size'])
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+    private function productColorValue(int $subCategoryId, int $colorValueId)
+    {
+        return AttributeValue::select('attribute_values.id', 'attribute_values.attr_id', 'attribute_values.attr_value')
+            ->join('attributes', 'attributes.id', '=', 'attribute_values.attr_id')
+            ->where('attribute_values.id', $colorValueId)
+            ->where('attribute_values.sub_category_id', $subCategoryId)
+            ->where('attribute_values.status', 1)
+            ->where('attributes.status', 1)
+            ->whereRaw('LOWER(attributes.name) = ?', ['color'])
+            ->first();
+    }
+    private function syncProductColorAttribute(int $productId, $productColor): void
+    {
+        ProductAttribute::where('product_id', $productId)
+            ->where('product_attribute_id', $productColor->attr_id)
+            ->delete();
+        ProductAttribute::insert([
+            'product_id' => $productId,
+            'product_attribute_id' => $productColor->attr_id,
+            'product_attribute_value_id' => $productColor->id,
+        ]);
     }
     public function updateCoverImage(){
         $proImages = ProductImage::select('product_id', 'image')->where('is_cover_image', '=', 1)->where('status', '=', 1)->orderBy('product_id', 'ASC')->get();

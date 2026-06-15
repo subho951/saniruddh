@@ -66,8 +66,8 @@ class FrontController extends Controller
         $data['banners2']                   = Banner::where('status', '=', 1)->where('section', '=', 2)->orderBy('id', 'DESC')->get();
         $data['sections2']                  = HomePage2Section::where('status', '=', 1)->where('section', '=', 3)->orderBy('id', 'ASC')->get();
         $data['home_page']                  = HomePage::where('status', '=', 1)->where('id', '=', 1)->first();
-        $data['featuredProducts']           = Product::select('id', 'main_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('is_feature', '=', 1)->orderBy('id', 'DESC')->limit(8)->get();
-        $data['products']                   = Product::select('id', 'main_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('is_new', '=', 1)->orderBy('id', 'DESC')->limit(8)->get();
+        $data['featuredProducts']           = Product::select('id', 'main_category', 'name', 'color', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('is_feature', '=', 1)->orderBy('id', 'DESC')->limit(8)->get();
+        $data['products']                   = Product::select('id', 'main_category', 'name', 'color', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('is_new', '=', 1)->orderBy('id', 'DESC')->limit(8)->get();
         $data['categoriesById']             = Category::where('status', '=', 1)->pluck('category_name', 'id');
         $data['categorySlugsById']          = Category::where('status', '=', 1)->pluck('slug', 'id');
         $data['blogs']                      = Blog::with('category')->where('status', '=', 1)->orderBy('publish_date', 'DESC')->orderBy('id', 'DESC')->limit(3)->get();
@@ -88,7 +88,7 @@ class FrontController extends Controller
 
         // $data['products']               = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->orderBy('id', 'DESC')->get();
         $data['productCount']           = Product::where('status', '=', 1)->where('main_category', '=', $parent_id)->orderBy('id', 'DESC')->count();
-        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->orderBy('id', 'DESC')->paginate(12);
+        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'color', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->orderBy('id', 'DESC')->paginate(12);
 
         $data['cat']                    = $data['getCategory'];
 
@@ -103,7 +103,7 @@ class FrontController extends Controller
             $request->merge(['page' => 1]);
             
             $subcat = implode(',',$postData['subcat']);
-            $data['products'] = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')
+            $data['products'] = Product::select('id', 'main_category', 'sub_category', 'name', 'color', 'slug', 'base_price', 'discounted_price', 'cover_image')
                                         ->whereIn('sub_category', $postData['subcat']) // correct
                                         ->where('main_category', $parent_id)
                                         ->where('status', 1)
@@ -138,7 +138,7 @@ class FrontController extends Controller
 
         // $data['products']               = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->where('sub_category', '=', $child_id)->orderBy('id', 'DESC')->get();
         $data['productCount']           = Product::select('id', 'name', 'slug', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->where('sub_category', '=', $child_id)->orderBy('id', 'DESC')->count();
-        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->where('sub_category', '=', $child_id)->orderBy('id', 'DESC')->paginate(9);
+        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'color', 'slug', 'base_price', 'discounted_price', 'cover_image')->where('status', '=', 1)->where('main_category', '=', $parent_id)->where('sub_category', '=', $child_id)->orderBy('id', 'DESC')->paginate(9);
 
         $data['parent_id']              = $parent_id;
         $data['child_id']               = $child_id;
@@ -179,7 +179,7 @@ class FrontController extends Controller
             $getProducts = [];
             if (!empty($productIds)) {
                 foreach ($productIds as $productId) {
-                    $getSingleProduct   = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'cover_image', 'short_description', 'base_price', 'discounted_price')->where('id', '=', $productId->product_id)->first();
+                    $getSingleProduct   = Product::select('id', 'main_category', 'sub_category', 'name', 'color', 'slug', 'cover_image', 'short_description', 'base_price', 'discounted_price')->where('id', '=', $productId->product_id)->first();
                     if ($getSingleProduct) {
                         if (($getSingleProduct->base_price >= $min_price) && ($getSingleProduct->base_price <= $max_price)) {
                             $getProducts[]        = $getSingleProduct;
@@ -217,7 +217,7 @@ class FrontController extends Controller
         $data['id']                     = $id;
         $data['getCategory']            = Category::where('id', '=', $id)->first();
         $data['subcategory']            = $data['getCategory'];
-        $data['getProducts']            = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'cover_image', 'short_description', 'base_price', 'discounted_price')->where('status', '=', 1)->where('sub_category', '=', $id)->orderBy($orderField, $orderType)->get();
+        $data['getProducts']            = Product::select('id', 'main_category', 'sub_category', 'name', 'color', 'slug', 'cover_image', 'short_description', 'base_price', 'discounted_price')->where('status', '=', 1)->where('sub_category', '=', $id)->orderBy($orderField, $orderType)->get();
         $data['minPrice']               = Product::where('status', '=', 1)->where('sub_category', '=', $id)->min('base_price');
         $data['maxPrice']               = Product::where('status', '=', 1)->where('sub_category', '=', $id)->max('base_price');
         $data['parent_id']              = $data['getCategory']->parent_id;
@@ -256,7 +256,7 @@ class FrontController extends Controller
             if($data['product']->meta_description != ''){
                 $meta_description = $data['product']->meta_description;
             } else {
-                $meta_description = (($data['product']->short_description !='')?$data['product']->short_description:$data['product']->long_description);
+                $meta_description = $data['product']->short_description;
             }
 
             if($data['product']->meta_keywords != ''){
@@ -276,12 +276,25 @@ class FrontController extends Controller
 
         // variation
         $dropdownValues = [];
-        $getProductparentAttrs = VariationAttribute::select('parent_attr_id')->where('status', '=', 1)->where('product_id', '=', $id)->groupBy('parent_attr_id')->get();
+        $getProductparentAttrs = VariationAttribute::select('variation_attributes.parent_attr_id')
+            ->join('attributes', 'attributes.id', '=', 'variation_attributes.parent_attr_id')
+            ->where('variation_attributes.status', '=', 1)
+            ->where('variation_attributes.product_id', '=', $id)
+            ->where('attributes.status', '=', 1)
+            ->whereRaw('LOWER(attributes.name) = ?', ['size'])
+            ->groupBy('variation_attributes.parent_attr_id')
+            ->get();
         if ($getProductparentAttrs) {
             foreach ($getProductparentAttrs as $getProductparentAttr) {
                 $parent_attr_id = $getProductparentAttr->parent_attr_id;
                 $getAttributeName = Attribute::select('name')->where('status', '=', 1)->where('id', '=', $parent_attr_id)->first();
-                $getProductparentAttrVals = VariationAttribute::select('attribute_id')->where('status', '=', 1)->where('product_id', '=', $id)->where('parent_attr_id', '=', $parent_attr_id)->get();
+                $getProductparentAttrVals = VariationAttribute::select('variation_attributes.attribute_id')
+                    ->join('product_variations', 'product_variations.id', '=', 'variation_attributes.product_variation_id')
+                    ->where('variation_attributes.status', '=', 1)
+                    ->where('variation_attributes.product_id', '=', $id)
+                    ->where('variation_attributes.parent_attr_id', '=', $parent_attr_id)
+                    ->where('product_variations.status', '=', 1)
+                    ->get();
                 // Helper::pr($getProductparentAttrVals);
                 $attr_vals = [];
                 if ($getProductparentAttrVals) {
@@ -331,6 +344,7 @@ class FrontController extends Controller
                     'id'            => $getProductId->id,
                     'slug'          => (($getProduct) ? $getProduct->slug : ''),
                     'name'          => (($getProduct) ? $getProduct->name : ''),
+                    'color'         => (($getProduct) ? $getProduct->color : ''),
                     'discounted_price'    => (($getProduct) ? $getProduct->discounted_price : ''),
                     // 'markup_price'  => (($getProduct)?$getProduct->markup_price:''),
                     // 'short_description'  => (($getProduct)?$getProduct->short_description:''),
@@ -396,18 +410,8 @@ class FrontController extends Controller
 
         $getProduct = Product::where('id', '=', $productId)->first();
 
-        $getProductAttr     = VariationAttribute::select(
-                                                            'product_variations.discounted_price'
-                                                        )
-                                                        ->join('product_variations', 'product_variations.id', '=', 'variation_attributes.product_variation_id')
-                                                        ->where('variation_attributes.product_id', $productId)
-                                                        ->where('variation_attributes.parent_attr_id', $sizeId)
-                                                        ->where('variation_attributes.attribute_id', $attrValId)
-                                                        ->where('variation_attributes.status', 1)
-                                                        ->first();
-
         $apiResponse = [
-            'discounted_price' => number_format((($getProductAttr) ? (($getProductAttr->discounted_price > 0 )?$getProductAttr->discounted_price:(($getProduct) ? $getProduct->discounted_price : 0.00)) : (($getProduct) ? $getProduct->discounted_price : 0.00)), 2, '.', '')
+            'discounted_price' => number_format((float) (($getProduct) ? $getProduct->discounted_price : 0.00), 2, '.', '')
         ];
         // Helper::pr($apiResponse);
         $this->response_to_json($apiStatus, $apiMessage, $apiResponse, $apiExtraField, $apiExtraData);
@@ -490,10 +494,12 @@ class FrontController extends Controller
             $international_shipping_single_item         = $generalSetting->international_shipping_single_item;
             $international_shipping_multiple_item       = $generalSetting->international_shipping_multiple_item;
 
-            $product_id                                 = (int) $postData['product_id'];
-            $product_qty                                = (int) $postData['product_qty'];
-            // $attr_id                                    = $postData['attr_id'];
-            $variationsArray                            = ((array_key_exists("variations", $postData)) ? $postData['variations'] : []);
+            $product_id                                 = (int) ($postData['product_id'] ?? 0);
+            $product_qty                                = (int) ($postData['product_qty'] ?? 0);
+            $variationsArray                            = array_values(array_unique(array_filter(array_map(
+                'intval',
+                (array) ($postData['variations'] ?? [])
+            ))));
 
             $getProduct         = DB::table('products')
                 ->join('categories', 'products.sub_category', '=', 'categories.id')
@@ -502,10 +508,6 @@ class FrontController extends Controller
                 ->where('products.id', '=', $product_id)
                 ->first();
             if ($getProduct) {
-                if ($product_qty < 1 || $product_qty > $getProduct->product_qty) {
-                    return redirect()->back()->with('error_message', 'Please select a valid product quantity.');
-                }
-
                 $generalSetting             = GeneralSetting::find('1');
 
                 $parent_id                  = [];
@@ -513,61 +515,62 @@ class FrontController extends Controller
                 $child_id                   = [];
                 $child_id_val               = [];
 
-                $userAgent                  = $request->header('User-Agent', 'unknown');
-                $acceptLanguage             = $request->header('Accept-Language', 'en');
-                $clientIp                   = $request->ip();
-                $deviceId                   = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
-                $checkProductInCart         = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product_id)->where('is_cart', '=', 1)->first();
-
-                /* variation add */
-                $attrName       = [];
                 $variation_name = '';
                 $variation_id   = 0;
-                if (!empty($variationsArray)) {
-                    for ($v = 0; $v < count($variationsArray); $v++) {
-                        $getVariationAttrVal = AttributeValue::select('attr_value')->where('id', '=', $variationsArray[$v])->first();
-                        if ($getVariationAttrVal) {
-                            $attrName[] = $getVariationAttrVal->attr_value;
-                        }
+                $hasSizeVariations = ProductVariation::where('product_id', $product_id)
+                    ->where('status', 1)
+                    ->exists();
+
+                if ($hasSizeVariations) {
+                    if (count($variationsArray) !== 1) {
+                        return redirect()->back()->with('error_message', 'Please select a size.');
                     }
-                    $variationCount = count($variationsArray);
-                    $productVariationIds = DB::table('variation_attributes')
-                        ->where('product_id', '=', $product_id)
-                        ->whereIn('attribute_id', $variationsArray) // Match the attribute IDs
-                        ->select('product_variation_id')
-                        ->groupBy('product_variation_id') // Group by product_variation_id
-                        ->havingRaw('COUNT(DISTINCT attribute_id) = ' . $variationCount) // Ensure both attribute_ids exist
-                        ->pluck('product_variation_id'); // Get the product_variation_ids
-                    // Helper::pr($productVariationIds);
-                    $selectedVariation = ProductVariation::where('product_id', '=', $product_id)
-                        ->whereIn('id', $productVariationIds)
-                        ->orderBy('price', 'ASC')
+
+                    $selectedSize = VariationAttribute::select(
+                            'variation_attributes.parent_attr_id',
+                            'variation_attributes.attribute_id',
+                            'attribute_values.attr_value',
+                            'product_variations.id as variation_id',
+                            'product_variations.qty'
+                        )
+                        ->join('attributes', 'attributes.id', '=', 'variation_attributes.parent_attr_id')
+                        ->join('attribute_values', 'attribute_values.id', '=', 'variation_attributes.attribute_id')
+                        ->join('product_variations', 'product_variations.id', '=', 'variation_attributes.product_variation_id')
+                        ->where('variation_attributes.product_id', $product_id)
+                        ->where('variation_attributes.attribute_id', $variationsArray[0])
+                        ->where('variation_attributes.status', 1)
+                        ->where('product_variations.status', 1)
+                        ->whereRaw('LOWER(attributes.name) = ?', ['size'])
                         ->first();
-                    if (! $selectedVariation) {
-                        return redirect()->back()->with('error_message', 'Please select a valid product variation.');
+
+                    if (! $selectedSize) {
+                        return redirect()->back()->with('error_message', 'Please select a valid size.');
                     }
-                    $variation_name     = implode(', ', $attrName);
-                    $variation_id       = $selectedVariation->id;
-                    $product_price      = $selectedVariation->price;
+                    if ($product_qty < 1 || $product_qty > (int) $selectedSize->qty) {
+                        return redirect()->back()->with('error_message', 'The selected quantity is not available for this size.');
+                    }
+
+                    $variation_name = $selectedSize->attr_value;
+                    $variation_id = (int) $selectedSize->variation_id;
+                    $product_price = (float) $getProduct->discounted_price;
+                    $parent_id = [(int) $selectedSize->parent_attr_id];
+                    $parent_id_val = ['Size'];
+                    $child_id = [(int) $selectedSize->attribute_id];
+                    $child_id_val = [$selectedSize->attr_value];
                 } else {
-                    $checkProductVariation = ProductVariation::where('product_id', '=', $product_id)->orderBy('price', 'asc')->first();
-                    if ($checkProductVariation) {
-                        $getVariationAttrs = VariationAttribute::select('value')->where('product_id', '=', $product_id)->where('product_variation_id', '=', $checkProductVariation->id)->get();
-                        if ($getVariationAttrs) {
-                            foreach ($getVariationAttrs as $getVariationAttr) {
-                                $attrName[] = $getVariationAttr->value;
-                            }
-                        }
-                        $variation_name     = implode(', ', $attrName);
-                        $variation_id       = $checkProductVariation->id;
-                        $product_price      = $checkProductVariation->price;
-                    } else {
-                        $variation_name     = '';
-                        $variation_id       = 0;
-                        $product_price      = $getProduct->discounted_price;
+                    if ($product_qty < 1 || $product_qty > (int) $getProduct->product_qty) {
+                        return redirect()->back()->with('error_message', 'Please select a valid product quantity.');
                     }
+                    $product_price = (float) $getProduct->discounted_price;
                 }
-                /* variation add */
+
+                $deviceId = $this->createDeviceFingerprint();
+                $checkProductInCart = OrderDetail::where('cust_device_id', '=', $deviceId)
+                    ->where('product_id', '=', $product_id)
+                    ->where('variation_id', '=', $variation_id)
+                    ->where('is_cart', '=', 1)
+                    ->where('status', '=', 0)
+                    ->first();
                 $total                      = ($product_price * $product_qty);
                 $shipping_amt               = 0;
                 $tax_amt                    = (($total * $tax_percent) / 100);
@@ -719,6 +722,7 @@ class FrontController extends Controller
         $data['deviceId']               = $deviceId;
         $data['cartItems']              = OrderDetail::where('cust_device_id', '=', $deviceId)->where('is_cart', '=', 1)->where('status', '=', 0)->get();
         $data['cartProducts']           = $this->productsForItems($data['cartItems']);
+        $data['variationStocks']        = ProductVariation::whereIn('id', $data['cartItems']->pluck('variation_id')->filter())->pluck('qty', 'id');
         $data['cartTotals']             = $this->cartTotals($data['cartItems']);
         if ($request->isMethod('post')) {
             $generalSetting                             = GeneralSetting::find('1');
@@ -1126,7 +1130,9 @@ class FrontController extends Controller
             ->where('is_cart', '=', 1)
             ->where('status', '=', 0)
             ->firstOrFail();
-        $productStock = Product::where('id', '=', $checkProductInCart->product_id)->value('product_qty');
+        $productStock = $checkProductInCart->variation_id > 0
+            ? ProductVariation::where('id', $checkProductInCart->variation_id)->where('product_id', $checkProductInCart->product_id)->value('qty')
+            : Product::where('id', '=', $checkProductInCart->product_id)->value('product_qty');
         $quantity = filter_var($postData['qty'] ?? null, FILTER_VALIDATE_INT);
         if ($quantity === false || $quantity < 1 || $quantity > $productStock) {
             return redirect(url('cart'))->with('error_message', 'Please select a valid product quantity.');
@@ -1247,10 +1253,13 @@ class FrontController extends Controller
         }
 
         $productStocks = Product::whereIn('id', $cartItems->pluck('product_id'))->pluck('product_qty', 'id');
+        $variationStocks = ProductVariation::whereIn('id', $cartItems->pluck('variation_id')->filter())->pluck('qty', 'id');
         $validQuantities = [];
         foreach ($cartItems as $cartItem) {
             $quantity = filter_var($quantities[$cartItem->id] ?? null, FILTER_VALIDATE_INT);
-            $productStock = (int) ($productStocks[$cartItem->product_id] ?? 0);
+            $productStock = $cartItem->variation_id > 0
+                ? (int) ($variationStocks[$cartItem->variation_id] ?? 0)
+                : (int) ($productStocks[$cartItem->product_id] ?? 0);
             if ($quantity === false || $quantity < 1 || $quantity > $productStock) {
                 return redirect(url('cart'))->with('error_message', 'Please select valid product quantities.');
             }
@@ -2052,7 +2061,7 @@ class FrontController extends Controller
     }
     public function specials()
     {
-        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'slug', 'base_price', 'discounted_price', 'cover_image')
+        $data['products']               = Product::select('id', 'main_category', 'sub_category', 'name', 'color', 'slug', 'base_price', 'discounted_price', 'cover_image')
             ->where('status', '=', 1)
             ->where('is_feature', '=', 1)
             ->orderBy('id', 'DESC')

@@ -56,7 +56,7 @@ class FrontendProductSeeder extends Seeder
 
         DB::transaction(function () use ($parents, $sizes, $colors, $products, $sourceImageDir, $targetImageDir): void {
             $this->seedCategoriesAndAttributes($parents, $sizes, $colors);
-            $this->seedProducts($products, $sourceImageDir, $targetImageDir);
+            $this->seedProducts($products, array_keys($colors), $sourceImageDir, $targetImageDir);
         });
 
         $this->command?->info('Frontend product seed complete: '.json_encode($this->summary));
@@ -157,14 +157,13 @@ class FrontendProductSeeder extends Seeder
         }
     }
 
-    private function seedProducts(array $products, string $sourceImageDir, string $targetImageDir): void
+    private function seedProducts(array $products, array $colors, string $sourceImageDir, string $targetImageDir): void
     {
         $referenceData = $this->productReferenceData();
 
         foreach ($products as $product) {
             $parentId = $this->categoryIds[$product['parent']];
             $subId = $this->categoryIds[$product['sub']];
-            $sku = $this->skuFromName($product['name']);
             $copiedImage = 'frontend-'.$product['image'];
             $source = $sourceImageDir.'/'.$product['image'];
             $target = $targetImageDir.'/'.$copiedImage;
@@ -174,7 +173,13 @@ class FrontendProductSeeder extends Seeder
                 $this->summary['images_copied']++;
             }
 
-            $productId = $this->upsertRow('products', ['slug' => $this->slug($product['name'])], [
+            foreach ($colors as $colorIndex => $color) {
+                $baseSku = $this->skuFromName($product['name']);
+                $sku = $colorIndex === 0 ? $baseSku : $baseSku.'-'.strtoupper($this->slug($color));
+                $slug = $colorIndex === 0
+                    ? $this->slug($product['name'])
+                    : $this->slug($product['name'].'-'.$color);
+                $productId = $this->upsertRow('products', ['slug' => $slug], [
                 'product_nature' => 'Physical',
                 'who_made_it' => 'SANIRUDDH',
                 'what_is_it' => 'Finished product',
@@ -184,6 +189,7 @@ class FrontendProductSeeder extends Seeder
                 'main_category' => $parentId,
                 'sub_category' => $subId,
                 'name' => $product['name'],
+                'color' => $color,
                 'base_price' => $product['base'],
                 'price_percentage' => 'PERCENTAGE',
                 'markup_price' => $product['base'],
@@ -191,7 +197,7 @@ class FrontendProductSeeder extends Seeder
                 'discounted_price' => $product['sale'],
                 'cover_image' => is_file($target) ? $copiedImage : '',
                 'short_description' => $product['name'].' from the Saniruddh boutique apparel collection.',
-                'long_description' => $product['name'].' from the Saniruddh boutique apparel collection. Available in multiple sizes and colors.',
+                'long_description' => null,
                 'is_personalization' => 0,
                 'personalization_instruction' => '',
                 'product_sku' => $sku,
@@ -204,9 +210,9 @@ class FrontendProductSeeder extends Seeder
                 'related_products' => '[]',
                 'is_feature' => $product['feature'],
                 'manufacturer' => 'SANIRUDDH',
-                'product_video_code' => '',
-                'product_video' => '',
-                'tags' => implode(',', [$product['parent'], $product['sub'], 'Size', 'Color']),
+                'product_video_code' => null,
+                'product_video' => null,
+                'tags' => implode(',', [$product['parent'], $product['sub'], 'Size', $color]),
                 'materials' => json_encode($referenceData['materials']),
                 'shipping_policy_id' => 0,
                 'shipping_info' => 'Standard shipping available.',
@@ -222,11 +228,12 @@ class FrontendProductSeeder extends Seeder
                 'updated_by' => 1,
             ]);
 
-            $this->summary['products']++;
-            $this->resetProductRelations($productId);
-            $this->seedProductImage($productId, $copiedImage, $target);
-            $this->seedProductAttributes($productId, $subId);
-            $this->seedProductVariations($productId, $subId, $sku, $product['base'], $product['sale']);
+                $this->summary['products']++;
+                $this->resetProductRelations($productId);
+                $this->seedProductImage($productId, $copiedImage, $target);
+                $this->seedProductAttributes($productId, $subId, $color);
+                $this->seedProductVariations($productId, $subId, $sku, $product['base'], $product['sale']);
+            }
         }
     }
 
@@ -263,24 +270,28 @@ class FrontendProductSeeder extends Seeder
         ]);
     }
 
-    private function seedProductAttributes(int $productId, int $subId): void
+    private function seedProductAttributes(int $productId, int $subId, string $color): void
     {
-        foreach ($this->attributeMap[$subId] as $attrData) {
-            foreach ($attrData['values'] as $valueId) {
-                DB::table('product_attributes')->insert([
-                    'product_id' => $productId,
-                    'product_attribute_id' => $attrData['id'],
-                    'product_attribute_value_id' => $valueId,
-                    'markup_price' => 0,
-                    'actual_price' => 0,
-                    'unit_price' => 0,
-                    'is_base_price' => 0,
-                    'status' => 1,
-                    'created_at' => now(),
-                ]);
+        $attributeValues = $this->attributeMap[$subId]['Size']['values'];
+        $attributeValues[$color] = $this->attributeMap[$subId]['Color']['values'][$color];
 
-                $this->summary['product_attributes']++;
-            }
+        foreach ($attributeValues as $value => $valueId) {
+            $attributeId = $value === $color
+                ? $this->attributeMap[$subId]['Color']['id']
+                : $this->attributeMap[$subId]['Size']['id'];
+            DB::table('product_attributes')->insert([
+                'product_id' => $productId,
+                'product_attribute_id' => $attributeId,
+                'product_attribute_value_id' => $valueId,
+                'markup_price' => 0,
+                'actual_price' => 0,
+                'unit_price' => 0,
+                'is_base_price' => 0,
+                'status' => 1,
+                'created_at' => now(),
+            ]);
+
+            $this->summary['product_attributes']++;
         }
     }
 
@@ -289,24 +300,21 @@ class FrontendProductSeeder extends Seeder
         $totalQty = 0;
 
         foreach ($this->attributeMap[$subId]['Size']['values'] as $size => $sizeId) {
-            foreach ($this->attributeMap[$subId]['Color']['values'] as $color => $colorId) {
-                $qty = 5;
-                $variationId = DB::table('product_variations')->insertGetId([
-                    'product_id' => $productId,
-                    'price' => $basePrice,
-                    'discounted_price' => $salePrice,
-                    'sku' => $sku.'-'.strtoupper($this->slug((string) $size)).'-'.strtoupper($this->slug($color)),
-                    'qty' => $qty,
-                    'status' => 1,
-                    'created_at' => now(),
-                ]);
+            $qty = 5;
+            $variationId = DB::table('product_variations')->insertGetId([
+                'product_id' => $productId,
+                'price' => $basePrice,
+                'discounted_price' => $salePrice,
+                'sku' => $sku.'-'.strtoupper($this->slug((string) $size)),
+                'qty' => $qty,
+                'status' => 1,
+                'created_at' => now(),
+            ]);
 
-                $this->summary['product_variations']++;
-                $totalQty += $qty;
+            $this->summary['product_variations']++;
+            $totalQty += $qty;
 
-                $this->insertVariationAttribute($variationId, $productId, $this->attributeMap[$subId]['Size']['id'], $sizeId, (string) $size);
-                $this->insertVariationAttribute($variationId, $productId, $this->attributeMap[$subId]['Color']['id'], $colorId, $color);
-            }
+            $this->insertVariationAttribute($variationId, $productId, $this->attributeMap[$subId]['Size']['id'], $sizeId, (string) $size);
         }
 
         DB::table('products')->where('id', $productId)->update([

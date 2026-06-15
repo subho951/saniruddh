@@ -98,7 +98,7 @@ $generalSetting = GeneralSetting::find(1);
                                   <td class="text-center" style="width: 50px;"><strong>#</strong></td>
                                   <td class="text-center" style="width: 80px;"><strong>Image</strong></td>
                                   <td><strong>Product Name</strong></td>
-                                  <td style="width: 200px;"><strong>Variation or Size / Color</strong></td>
+                                  <td style="width: 140px;"><strong>Size</strong></td>
                                   <td style="width: 120px;"><strong>SKU</strong></td>
                                   <td class="text-center" style="width: 70px;"><strong>Qty</strong></td>
                                   <td class="text-end" style="width: 110px;"><strong>Rate</strong></td>
@@ -152,6 +152,9 @@ $generalSetting = GeneralSetting::find(1);
                                      </td>
                                      <td>
                                         <?=($getProduct ? $getProduct->name : '-')?><br>
+                                        <?php if($getProduct && $getProduct->color != ''){ ?>
+                                          <small>Color: <?=$getProduct->color?></small><br>
+                                        <?php } ?>
                                         <?php
                                        $external_product_link = url('product/'.($getProduct ? $getProduct->slug : '').'/'.Helper::encoded($orderDetail->product_id));
                                        

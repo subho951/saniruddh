@@ -206,6 +206,11 @@
         object-fit: cover;
         width: 100%;
     }
+    .storefront-product-color {
+        color: #806f62;
+        font-size: 13px;
+        margin-bottom: 5px;
+    }
     .storefront-catalog-toolbar {
         align-items: center;
         border-bottom: 1px solid #e9dfcf;

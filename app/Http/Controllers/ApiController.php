@@ -445,12 +445,11 @@ class ApiController extends Controller
                             $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                             $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                             $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                            $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                             $new_products[]                 = [
                                 'id'                    => $product->id,
                                 'name'                  => $product->name,
                                 'slug'                  => $product->slug,
-                                'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                'base_price'            => number_format($product->discounted_price, 2),
                                 'price_percentage'      => $product->price_percentage,
                                 'discount_amount'       => $product->discount_amount,
                                 'markup_price'          => number_format($product->base_price,2),
@@ -491,12 +490,11 @@ class ApiController extends Controller
                             $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                             $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                             $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                            $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                             $trending_products[]            = [
                                 'id'                    => $product->id,
                                 'name'                  => $product->name,
                                 'slug'                  => $product->slug,
-                                'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                'base_price'            => number_format($product->discounted_price, 2),
                                 'price_percentage'      => $product->price_percentage,
                                 'discount_amount'       => $product->discount_amount,
                                 'markup_price'          => number_format($product->base_price,2),
@@ -538,12 +536,11 @@ class ApiController extends Controller
                             $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                             $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                             $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                            $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                             $featured_products[]            = [
                                 'id'                    => $product->id,
                                 'name'                  => $product->name,
                                 'slug'                  => $product->slug,
-                                'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                'base_price'            => number_format($product->discounted_price, 2),
                                 'price_percentage'      => $product->price_percentage,
                                 'discount_amount'       => $product->discount_amount,
                                 'markup_price'          => number_format($product->base_price,2),
@@ -795,12 +792,11 @@ class ApiController extends Controller
                                 $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                                 $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                                 $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                                $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                                 $product_list[]                 = [
                                     'id'                    => $product->id,
                                     'name'                  => $product->name,
                                     'slug'                  => $product->slug,
-                                    'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                    'base_price'            => number_format($product->discounted_price, 2),
                                     'price_percentage'      => $product->price_percentage,
                                     'discount_amount'       => $product->discount_amount,
                                     'markup_price'          => number_format($product->base_price,2),
@@ -934,12 +930,11 @@ class ApiController extends Controller
                             $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                             $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                             $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                            $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                             $product_list[]                 = [
                                 'id'                    => $product->id,
                                 'name'                  => $product->name,
                                 'slug'                  => $product->slug,
-                                'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                'base_price'            => number_format($product->discounted_price, 2),
                                 'price_percentage'      => $product->price_percentage,
                                 'discount_amount'       => $product->discount_amount,
                                 'markup_price'          => number_format($product->base_price,2),
@@ -1050,12 +1045,11 @@ class ApiController extends Controller
                             $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                             $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                             $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                            $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                             $product_list[]                 = [
                                 'id'                    => $product->id,
                                 'name'                  => $product->name,
                                 'slug'                  => $product->slug,
-                                'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                'base_price'            => number_format($product->discounted_price, 2),
                                 'price_percentage'      => $product->price_percentage,
                                 'discount_amount'       => $product->discount_amount,
                                 'markup_price'          => number_format($product->base_price,2),
@@ -1093,12 +1087,11 @@ class ApiController extends Controller
                             $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                             $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                             $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                            $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                             $product_list[]                 = [
                                 'id'                    => $product->id,
                                 'name'                  => $product->name,
                                 'slug'                  => $product->slug,
-                                'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                'base_price'            => number_format($product->discounted_price, 2),
                                 'price_percentage'      => $product->price_percentage,
                                 'discount_amount'       => $product->discount_amount,
                                 'markup_price'          => number_format($product->base_price,2),
@@ -1138,12 +1131,11 @@ class ApiController extends Controller
                             $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                             $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                             $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                            $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                             $product_list[]   = [
                                 'id'                    => $product->id,
                                 'name'                  => $product->name,
                                 'slug'                  => $product->slug,
-                                'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                'base_price'            => number_format($product->discounted_price, 2),
                                 'price_percentage'      => $product->price_percentage,
                                 'discount_amount'       => $product->discount_amount,
                                 'markup_price'          => number_format($product->base_price,2),
@@ -1214,12 +1206,11 @@ class ApiController extends Controller
                             $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                             $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                             $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                            $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                             $featured_product_list[]        = [
                                 'id'                    => $product->id,
                                 'name'                  => $product->name,
                                 'slug'                  => $product->slug,
-                                'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                                'base_price'            => number_format($product->discounted_price, 2),
                                 'price_percentage'      => $product->price_percentage,
                                 'discount_amount'       => $product->discount_amount,
                                 'markup_price'          => number_format($product->base_price,2),
@@ -1338,7 +1329,6 @@ class ApiController extends Controller
                                 }
                             }
                         // attribute
-                        $checkProductVariation          = ProductVariation::where('product_id', '=', $getProduct->id)->orderBy('price', 'asc')->first();
                         $product_info       = [
                             'id'                    => $getProduct->id,
                             'name'                  => $getProduct->name,
@@ -1347,10 +1337,9 @@ class ApiController extends Controller
                             'sub_category'          => $getProduct->sub_category,
                             'product_sku'           => $getProduct->product_sku,
                             'short_description'     => $getProduct->short_description,
-                            'long_description'      => $getProduct->long_description,
                             'variation'             => $variations,
                             'product_attributes'    => $product_attributes,
-                            'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$getProduct->base_price),2),
+                            'base_price'            => number_format($getProduct->discounted_price, 2),
                             'price_percentage'      => $getProduct->price_percentage,
                             'markup_price'          => number_format($getProduct->markup_price,2),
                             'parent__category_name' => (($getParentCategory)?$getParentCategory->category_name:''),
@@ -1403,29 +1392,31 @@ class ApiController extends Controller
             $apiExtraField      = '';
             $apiExtraData       = '';
             $requestData        = $request->all();
-            $requiredFields     = ['key', 'source', 'variations'];
+            $requiredFields     = ['key', 'source', 'product_id', 'variations'];
             $headerData         = $request->header();
             if (!$this->validateArray($requiredFields, $requestData)){
                 $apiStatus          = FALSE;
                 $apiMessage         = 'All Data Are Not Present !!!';
             }
             if($headerData['key'][0] == env('PROJECT_KEY')){
+                $productId       = (int) $requestData['product_id'];
                 $variationsArray  = $requestData['variations'];
-                // echo $variation1 = $variationsArray[0];
-                // echo $variation2 = $variationsArray[1];
-                // Query rows with attribute_id = 3 and attribute_id = 11 for the same product_variation_id
                 $result = DB::table('variation_attributes')
-                            ->select('product_variation_id') // Only select grouped columns
+                            ->select('product_variation_id')
+                            ->where('product_id', $productId)
                             ->whereIn('attribute_id', $variationsArray)
                             ->groupBy('product_variation_id')
-                            ->havingRaw('COUNT(DISTINCT attribute_id) = 2')
+                            ->havingRaw('COUNT(DISTINCT attribute_id) = ?', [count($variationsArray)])
                             ->first();
                 if($result){
                     $product_variation_id = $result->product_variation_id;
-                    $getVariationInfo = ProductVariation::select('price', 'sku')->where('id', '=', $product_variation_id)->first();
+                    $getVariationInfo = ProductVariation::select('product_variations.sku', 'products.discounted_price')
+                        ->join('products', 'products.id', '=', 'product_variations.product_id')
+                        ->where('product_variations.id', '=', $product_variation_id)
+                        ->first();
                     if($getVariationInfo){
                         $apiResponse = [
-                            'price'     => number_format($getVariationInfo->price,2),
+                            'price'     => number_format($getVariationInfo->discounted_price, 2),
                             'sku'       => $getVariationInfo->sku,
                         ];
                     }
@@ -1438,7 +1429,7 @@ class ApiController extends Controller
                     $viewData = [
                         'device_id'     => $deviceId,
                         'page'          => 'select variation',
-                        'product_id'    => 0,
+                        'product_id'    => $productId,
                     ];
                     UserView::insert($viewData);
                 /* view analytics track */
@@ -1463,7 +1454,7 @@ class ApiController extends Controller
             $apiExtraField      = '';
             $apiExtraData       = '';
             $requestData        = $request->all();
-            $requiredFields     = ['key', 'source', 'product_id', 'product_qty', 'product_rate'];
+            $requiredFields     = ['key', 'source', 'product_id', 'product_qty'];
             $headerData         = $request->header();
             if (!$this->validateArray($requiredFields, $requestData)){
                 $apiStatus          = FALSE;
@@ -1472,8 +1463,7 @@ class ApiController extends Controller
             if($headerData['key'][0] == env('PROJECT_KEY')){
                 $product_id         = $requestData['product_id'];
                 $product_qty        = $requestData['product_qty'];
-                $product_rate       = $requestData['product_rate'];
-                $variationsArray    = $requestData['variations'];
+                $variationsArray    = (array) ($requestData['variations'] ?? []);
                 $getProduct         = DB::table('products')
                                         ->join('categories', 'products.sub_category', '=', 'categories.id')
                                         ->select('products.*', 'categories.category_name as sub_category_name')
@@ -1488,12 +1478,12 @@ class ApiController extends Controller
                     $parent_id_val              = [];
                     $child_id                   = [];
                     $child_id_val               = [];
+                    $product_price              = (float) $getProduct->discounted_price;
                     
                     $userAgent                  = $request->header('User-Agent', 'unknown');
                     $acceptLanguage             = $request->header('Accept-Language', 'en');
                     $clientIp                   = $request->ip();
                     $deviceId                   = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
-                    $checkProductInCart         = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product_id)->where('is_cart', '=', 1)->first();
                     // Helper::pr($variationsArray);
                     /* variation add */
                         $attrName       = [];
@@ -1508,17 +1498,17 @@ class ApiController extends Controller
                             }
                             $variationCount = count($variationsArray);
                             $productVariationIds = DB::table('variation_attributes')
+                                ->where('product_id', $product_id)
                                 ->whereIn('attribute_id', $variationsArray) // Match the attribute IDs
                                 ->select('product_variation_id')
-                                ->groupBy('product_variation_id') // Group by product_variation_id
-                                ->havingRaw('COUNT(DISTINCT attribute_id) = ' . $variationCount) // Ensure both attribute_ids exist
-                                ->pluck('product_variation_id'); // Get the product_variation_ids
+                                ->groupBy('product_variation_id')
+                                ->havingRaw('COUNT(DISTINCT attribute_id) = ?', [$variationCount])
+                                ->pluck('product_variation_id');
                             // Helper::pr($productVariationIds);
                             $variation_name     = implode(', ', $attrName);
-                            $variation_id       = (($productVariationIds)?$productVariationIds[0]:0);
-                            $product_price      = $product_rate;
+                            $variation_id       = (int) ($productVariationIds->first() ?? 0);
                         } else {
-                            $checkProductVariation = ProductVariation::where('product_id', '=', $product_id)->orderBy('price', 'asc')->first();
+                            $checkProductVariation = ProductVariation::where('product_id', '=', $product_id)->orderBy('id')->first();
                             if($checkProductVariation){
                                 $getVariationAttrs = VariationAttribute::select('value')->where('product_id', '=', $product_id)->where('product_variation_id', '=', $checkProductVariation->id)->get();
                                 if($getVariationAttrs){
@@ -1528,15 +1518,19 @@ class ApiController extends Controller
                                 }
                                 $variation_name     = implode(', ', $attrName);
                                 $variation_id       = $checkProductVariation->id;
-                                $product_price      = $checkProductVariation->price;
                             } else {
                                 $variation_name     = '';
                                 $variation_id       = 0;
-                                $product_price      = $product_rate;
                             }
                         }
                         // echo $variation_name;die;
                     /* variation add */
+                    $checkProductInCart = OrderDetail::where('cust_device_id', '=', $deviceId)
+                        ->where('product_id', '=', $product_id)
+                        ->where('variation_id', '=', $variation_id)
+                        ->where('is_cart', '=', 1)
+                        ->where('status', '=', 0)
+                        ->first();
                     $total                      = ($product_price * $product_qty);
                     // $shipping_amt               = (($total * $shipping_charge)/100);
                     $shipping_amt               = $getProduct->shipping_rate;
@@ -1876,10 +1870,9 @@ class ApiController extends Controller
                                             ->select('products.*', 'categories.category_name as sub_category_name')
                                             ->where('products.status', 1) // AND condition
                                             ->where(function ($query) use ($search_keyword) {
-                                                $query->orWhere('products.name', 'like', '%' . $search_keyword . '%') // Match column1
-                                                      ->orWhere('products.tags', 'like', '%' . $search_keyword . '%') // OR match column2
-                                                      ->orWhere('products.short_description', 'like', '%' . $search_keyword . '%')
-                                                      ->orWhere('products.long_description', 'like', '%' . $search_keyword . '%'); // OR match column3
+                                                $query->orWhere('products.name', 'like', '%' . $search_keyword . '%')
+                                                      ->orWhere('products.tags', 'like', '%' . $search_keyword . '%')
+                                                      ->orWhere('products.short_description', 'like', '%' . $search_keyword . '%');
                                             })
                                             ->get();
                 
@@ -1893,12 +1886,11 @@ class ApiController extends Controller
                         $deviceId                       = $this->createDeviceFingerprint($userAgent, $acceptLanguage, $clientIp);
                         $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                         $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
-                        $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                         $apiResponse[]                  = [
                             'id'                    => $product->id,
                             'name'                  => $product->name,
                             'slug'                  => $product->slug,
-                            'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                            'base_price'            => number_format($product->discounted_price, 2),
                             'price_percentage'      => $product->price_percentage,
                             'discount_amount'       => $product->discount_amount,
                             'markup_price'          => number_format($product->base_price,2),
@@ -1966,11 +1958,10 @@ class ApiController extends Controller
                                             ->select('products.*', 'categories.category_name as sub_category_name')
                                             ->where('products.status', 1) // AND condition
                                             ->where(function ($query) use ($search_keyword) {
-                                                $query->orWhere('products.name', 'like', '%' . $search_keyword . '%') // Match column1
-                                                      ->orWhere('products.tags', 'like', '%' . $search_keyword . '%') // OR match column2
+                                                $query->orWhere('products.name', 'like', '%' . $search_keyword . '%')
+                                                      ->orWhere('products.tags', 'like', '%' . $search_keyword . '%')
                                                       ->orWhere('products.short_description', 'like', '%' . $search_keyword . '%')
-                                                      ->orWhere('products.long_description', 'like', '%' . $search_keyword . '%') // OR match column3
-                                                      ->orWhere('products.product_sku', 'like', '%' . $search_keyword . '%'); // OR match column3
+                                                      ->orWhere('products.product_sku', 'like', '%' . $search_keyword . '%');
                                             })
                                             ->get();
                 
@@ -1985,12 +1976,11 @@ class ApiController extends Controller
                         $checkCart                      = OrderDetail::where('cust_device_id', '=', $deviceId)->where('product_id', '=', $product->id)->where('is_cart', '=', 1)->count();
                         // $checkWishlist                  = UserWishlist::where('user_id', '=', $uId)->where('product_id', '=', $product->id)->count();
                         $checkWishlist                  = UserWishlist::where('product_id', '=', $product->id)->count();
-                        $checkProductVariation          = ProductVariation::where('product_id', '=', $product->id)->orderBy('price', 'asc')->first();
                         $apiResponse[]                  = [
                             'id'                    => $product->id,
                             'name'                  => $product->name,
                             'slug'                  => $product->slug,
-                            'base_price'            => number_format((($checkProductVariation)?$checkProductVariation->price:$product->discounted_price),2),
+                            'base_price'            => number_format($product->discounted_price, 2),
                             'cover_image'           => env('UPLOADS_URL') . 'product/' . $product->cover_image,
                             'rating'                => round($averageRating),
                             'product_sku'           => $product->product_sku,

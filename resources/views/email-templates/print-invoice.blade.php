@@ -111,7 +111,7 @@
             <thead>
                 <tr>
                     <th style="width:36%;">Product</th>
-                    <th style="width:23%;">Variation</th>
+                    <th style="width:23%;">Size</th>
                     <th style="width:16%;">SKU</th>
                     <th class="right" style="width:10%;">Qty</th>
                     <th class="right" style="width:15%;">Amount</th>
@@ -134,6 +134,7 @@
                     <tr>
                         <td>
                             <span class="product-name">{{ data_get($product, 'name', 'Product') }}</span>
+                            @if(data_get($product, 'color'))<br><span class="muted">Color: {{ data_get($product, 'color') }}</span>@endif
                         </td>
                         <td class="muted">{{ $variationText }}</td>
                         <td class="muted">{{ $sku ?: 'N/A' }}</td>

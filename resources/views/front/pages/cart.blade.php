@@ -28,12 +28,13 @@
                                         <td class="product-image"><img src="{{ $cartProduct && $cartProduct->cover_image ? asset('public/uploads/product/'.$cartProduct->cover_image) : asset('public/uploads/no-image.jpg') }}" alt="{{ $cartProduct->name ?? 'Product' }}"></td>
                                         <td class="product-name">
                                             <a class="name" href="{{ $cartProduct ? url('product/'.$cartProduct->slug.'/'.\App\Helpers\Helper::encoded($cartProduct->id)) : 'javascript:;' }}">{{ $cartProduct->name ?? 'Product' }}</a>
-                                            @if($cartItem->variation_name)<small>{{ $cartItem->variation_name }}</small>@endif
+                                            @if($cartProduct && $cartProduct->color)<small>Color: {{ $cartProduct->color }}</small>@endif
+                                            @if($cartItem->variation_name)<small>Size: {{ $cartItem->variation_name }}</small>@endif
                                         </td>
                                         <td class="product-quantity">
                                             <div class="product-quantity d-inline-flex">
                                                 <button type="button" class="sub" aria-label="Decrease quantity">-</button>
-                                                <input type="number" name="quantities[{{ $cartItem->id }}]" min="1" max="{{ $cartProduct->product_qty ?? 999 }}" value="{{ $cartItem->qty }}" aria-label="Quantity">
+                                                <input type="number" name="quantities[{{ $cartItem->id }}]" min="1" max="{{ $cartItem->variation_id > 0 ? ($variationStocks[$cartItem->variation_id] ?? 0) : ($cartProduct->product_qty ?? 0) }}" value="{{ $cartItem->qty }}" aria-label="Quantity">
                                                 <button type="button" class="add" aria-label="Increase quantity">+</button>
                                             </div>
                                         </td>
