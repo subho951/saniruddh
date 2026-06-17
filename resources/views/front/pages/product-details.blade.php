@@ -51,7 +51,7 @@
                                 <span class="sale-price"><i class="fa fa-inr"></i> <span id="product-price">{{ number_format($product->discounted_price, 2) }}</span></span>
                             </div>
                         </div>
-                        <p>{{ $product->short_description }}</p>
+                        <p>{{ strip_tags($product->short_description) }}</p>
 
                         <form action="{{ url('add-to-cart') }}" method="post" id="add-to-cart-form">
                             @csrf
