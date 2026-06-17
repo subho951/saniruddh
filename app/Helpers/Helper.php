@@ -57,6 +57,41 @@ class Helper{
     public static function uptoTwoDecimal($number){
         return number_format((float)$number, 2, '.', '');
     }
+    public static function orderItemVariationText($item, $fallback = '', $includeLabels = true)
+    {
+        $parentRaw = data_get($item, 'parent_id_val', '[]');
+        $childRaw = data_get($item, 'child_id_val', '[]');
+        $parentValues = json_decode((string) $parentRaw, true);
+        $childValues = json_decode((string) $childRaw, true);
+        $parts = [];
+
+        if (is_array($childValues)) {
+            foreach ($childValues as $index => $value) {
+                $value = trim((string) $value);
+                if ($value === '') {
+                    continue;
+                }
+
+                $label = '';
+                if (is_array($parentValues) && array_key_exists($index, $parentValues)) {
+                    $label = trim((string) $parentValues[$index]);
+                }
+
+                $parts[] = ($includeLabels && $label !== '') ? $label . ': ' . $value : $value;
+            }
+        }
+
+        if (!empty($parts)) {
+            return implode(', ', $parts);
+        }
+
+        $variationName = trim((string) data_get($item, 'variation_name', ''));
+        if ($variationName !== '') {
+            return $includeLabels ? 'Size: ' . $variationName : $variationName;
+        }
+
+        return $fallback;
+    }
     public static function clean($string) 
     {
        $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.

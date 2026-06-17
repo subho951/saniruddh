@@ -24,12 +24,13 @@
                             <tbody>
                                 @foreach($cartItems as $cartItem)
                                     @php($cartProduct = $cartProducts->get($cartItem->product_id))
+                                    @php($cartItemSize = \App\Helpers\Helper::orderItemVariationText($cartItem))
                                     <tr>
                                         <td class="product-image"><img src="{{ $cartProduct && $cartProduct->cover_image ? asset('public/uploads/product/'.$cartProduct->cover_image) : asset('public/uploads/no-image.jpg') }}" alt="{{ $cartProduct->name ?? 'Product' }}"></td>
                                         <td class="product-name">
                                             <a class="name" href="{{ $cartProduct ? url('product/'.$cartProduct->slug.'/'.\App\Helpers\Helper::encoded($cartProduct->id)) : 'javascript:;' }}">{{ $cartProduct->name ?? 'Product' }}</a>
                                             @if($cartProduct && $cartProduct->color)<small>Color: {{ $cartProduct->color }}</small>@endif
-                                            @if($cartItem->variation_name)<small>Size: {{ $cartItem->variation_name }}</small>@endif
+                                            @if($cartItemSize)<small>{{ $cartItemSize }}</small>@endif
                                         </td>
                                         <td class="product-quantity">
                                             <div class="product-quantity d-inline-flex">

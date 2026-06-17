@@ -21,11 +21,12 @@
             <tbody>
                 @foreach($summaryItems as $summaryItem)
                     @php($summaryProduct = $summaryProducts->get($summaryItem->product_id))
+                    @php($summaryItemSize = \App\Helpers\Helper::orderItemVariationText($summaryItem))
                     <tr>
                         <td class="Product-name">
                             <p>{{ $summaryProduct->name ?? 'Product' }} x {{ $summaryItem->qty }}</p>
                             @if($summaryProduct && $summaryProduct->color)<small>Color: {{ $summaryProduct->color }}</small>@endif
-                            @if($summaryItem->variation_name)<small>Size: {{ $summaryItem->variation_name }}</small>@endif
+                            @if($summaryItemSize)<small>{{ $summaryItemSize }}</small>@endif
                         </td>
                         <td class="Product-price"><p><i class="fa fa-inr"></i> {{ number_format($summaryItem->subtotal, 2) }}</p></td>
                     </tr>

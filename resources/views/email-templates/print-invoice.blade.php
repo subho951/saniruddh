@@ -121,13 +121,7 @@
                 @foreach($orderDetails as $orderDetail)
                     @php
                         $product = $products->get($orderDetail->product_id);
-                        $variationNames = collect(json_decode($orderDetail->parent_id_val, true) ?: []);
-                        $variationValues = collect(json_decode($orderDetail->child_id_val, true) ?: []);
-                        $variationText = $variationNames->map(function ($name, $index) use ($variationValues) {
-                            $value = trim((string) $variationValues->get($index));
-                            return $value !== '' ? trim((string) $name).': '.$value : '';
-                        })->filter()->implode(', ');
-                        $variationText = $variationText ?: ($orderDetail->variation_name ?: 'Standard');
+                        $variationText = \App\Helpers\Helper::orderItemVariationText($orderDetail, 'Standard', false);
                         $sku = $variationSkus->get($orderDetail->variation_id) ?: data_get($product, 'product_sku', 'N/A');
                         $lineAmount = (float) ($orderDetail->subtotal ?? $orderDetail->total);
                     @endphp
