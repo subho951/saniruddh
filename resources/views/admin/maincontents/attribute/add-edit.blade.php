@@ -115,33 +115,9 @@ $controllerRoute = $module['controller_route'];
                         <!-- attribute values -->
                           <input type="hidden" name="attr_val_id[]" value="<?=$getAttrVal->id?>">
                           <div class="row mt-3" id="attr-value-<?=$getAttrVal->id?>" style="border: 3px solid #f9b922;padding: 10px;border-radius: 10px;">
-                            <div class="col-md-4">
+                            <div class="col-md-11">
                               <label for="name" class="col-form-label">Attribute Value Name</label>
                               <input type="text" class="form-control" name="attr_value[]" value="<?=$getAttrVal->attr_value?>" required>
-                            </div>
-                            <div class="col-md-1">
-                              <label for="name" class="col-form-label">Price Type</label>
-                              <select class="form-control" name="price_type[]">
-                                <option value="" selected>Select</option>
-                                <option value="PERCENT" <?=(($getAttrVal->price_type == 'PERCENT')?'selected':'')?>>PERCENT</option>
-                                <option value="FLAT" <?=(($getAttrVal->price_type == 'FLAT')?'selected':'')?>>FLAT</option>
-                              </select>
-                            </div>
-                            <div class="col-md-1">
-                              <label for="name" class="col-form-label">Price Value</label>
-                              <input type="text" class="form-control" name="price_val[]" value="<?=$getAttrVal->price_val?>">
-                            </div>
-                            <div class="col-md-3">
-                              <label for="name" class="col-form-label">Image</label>
-                              <input type="file" class="form-control" name="attr_value_image[]" value="">
-                              <?php if($getAttrVal->attr_value_image != ''){?>
-                                <input type="hidden" name="attr_value_prev_image[]" value="<?=$getAttrVal->attr_value_image?>">
-                                <img src="<?=env('UPLOADS_URL').'product/'.$getAttrVal->attr_value_image?>" class="img-thumbnail" style="width: 75px; height: 75px;">
-                              <?php }?>
-                            </div>
-                            <div class="col-md-2">
-                              <label for="name" class="col-form-label">Reference Value</label>
-                              <input type="text" class="form-control" name="ref_val[]" value="<?=$getAttrVal->ref_val?>">
                             </div>
                             <div class="col-md-1">
                               <label for="name" class="col-form-label">Action</label><br>
@@ -219,29 +195,9 @@ $controllerRoute = $module['controller_route'];
           if(x < maxField){
               var fieldHTML = '<div class="row mt-3" style="border: 1px solid #f9b922;padding: 10px;border-radius: 10px;">\
                                 <input type="hidden" name="attr_val_id[]" value="">\
-                                <div class="col-md-4">\
+                                <div class="col-md-11">\
                                   <label for="name" class="col-form-label">Attribute Value Name</label>\
                                   <input type="text" class="form-control" name="attr_value[]" required>\
-                                </div>\
-                                <div class="col-md-1">\
-                                  <label for="name" class="col-form-label">Price Type</label>\
-                                  <select class="form-control" name="price_type[]">\
-                                    <option value="" selected>Select</option>\
-                                    <option value="PERCENT">PERCENT</option>\
-                                    <option value="FLAT">FLAT</option>\
-                                  </select>\
-                                </div>\
-                                <div class="col-md-1">\
-                                  <label for="name" class="col-form-label">Price Value</label>\
-                                  <input type="text" class="form-control" name="price_val[]">\
-                                </div>\
-                                <div class="col-md-3">\
-                                  <label for="name" class="col-form-label">Image</label>\
-                                  <input type="file" class="form-control" name="attr_value_image[]">\
-                                </div>\
-                                <div class="col-md-2">\
-                                  <label for="name" class="col-form-label">Reference Value</label>\
-                                  <input type="text" class="form-control" name="ref_val[]">\
                                 </div>\
                                 <div class="col-md-1">\
                                   <label for="name" class="col-form-label">Action</label><br>\
@@ -271,29 +227,9 @@ $controllerRoute = $module['controller_route'];
     var wrapper = $('.field_wrapper' + wrapperId);
     var fieldHTML = '<div class="row mt-3" id="attr-value-' + incremenetedCounter + '" style="border: 1px solid #f9b922;padding: 10px;border-radius: 10px;">\
                       <input type="hidden" name="attr_val_id[]" value="">\
-                      <div class="col-md-4">\
+                      <div class="col-md-11">\
                         <label for="name" class="col-form-label">Attribute Value Name</label>\
                         <input type="text" class="form-control" name="attr_value[]" required>\
-                      </div>\
-                      <div class="col-md-1">\
-                        <label for="name" class="col-form-label">Price Type</label>\
-                        <select class="form-control" name="price_type[]">\
-                          <option value="" selected>Select</option>\
-                          <option value="PERCENT">PERCENT</option>\
-                          <option value="FLAT">FLAT</option>\
-                        </select>\
-                      </div>\
-                      <div class="col-md-1">\
-                        <label for="name" class="col-form-label">Price Value</label>\
-                        <input type="text" class="form-control" name="price_val[]">\
-                      </div>\
-                      <div class="col-md-3">\
-                        <label for="name" class="col-form-label">Image</label>\
-                        <input type="file" class="form-control" name="attr_value_image[]">\
-                      </div>\
-                      <div class="col-md-2">\
-                        <label for="name" class="col-form-label">Reference Value</label>\
-                        <input type="text" class="form-control" name="ref_val[]">\
                       </div>\
                       <div class="col-md-1">\
                         <label for="name" class="col-form-label">Action</label><br>\

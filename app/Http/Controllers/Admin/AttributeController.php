@@ -45,8 +45,8 @@ class AttributeController extends Controller
                     'sub_category_id'             => 'required',
                 ];
                 if($this->validate($request, $rules)){
-                    $name       = $postData['name'];
-                    $attr_value = $postData['attr_value'];
+                    $name       = $postData['name'] ?? [];
+                    $attr_value = $postData['attr_value'] ?? [];
                     if(!empty($name)){
                         for($a=0;$a<count($name);$a++){
                             $fields = [
@@ -59,14 +59,8 @@ class AttributeController extends Controller
 
                             /* attribute values */
                                 if(!empty($attr_value)){
-                                    for($a=0;$a<count($attr_value);$a++){
-                                        $fields = [
-                                            'parent_category'               => $postData['parent_category'],
-                                            'sub_category_id'               => $postData['sub_category_id'],
-                                            'attr_id'                       => $attr_id,
-                                            'attr_value'                    => $attr_value[$a],
-                                        ];
-                                        AttributeValue::insertGetId($fields);
+                                    for($v=0;$v<count($attr_value);$v++){
+                                        AttributeValue::insertGetId($this->attributeValueFields($postData, $attr_id, $attr_value[$v]));
                                     }
                                 }
                             /* attribute values */
@@ -108,37 +102,9 @@ class AttributeController extends Controller
                     } else {
                         $attr_val_id       = [];
                     }
-                    if(array_key_exists("attr_value_prev_image",$postData)){
-                        $attr_value_prev_image       = $postData['attr_value_prev_image'];
-                    } else {
-                        $attr_value_prev_image       = [];
-                    }
-                    $name                   = $postData['name'];
-                    $is_price_effect        = $postData['is_price_effect'];
-                    $attr_value             = $postData['attr_value'];
-                    $price_type             = $postData['price_type'];
-                    $price_val              = $postData['price_val'];
-                    if(array_key_exists("attr_value_image",$postData)){
-                        $attr_value_image       = array_filter(array_merge($postData['attr_value_image']));
-                    } else {
-                        $attr_value_image       = [];
-                    }
-                    $ref_val                = $postData['ref_val'];
-
-                    
-                    $images                 = [];
-                    if(!empty($attr_value_image)){
-                        $image_array                        = array_filter(array_merge($request->file('attr_value_image')));
-                        if(!empty($image_array)){
-                            $uploadedFile       = $this->commonFileArrayUpload('public/uploads/product/', $image_array, 'image');
-                            if(!empty($uploadedFile)){
-                                $images    = $uploadedFile;
-                            } else {
-                                $images    = [];
-                            }
-                        }
-                    }
-                    $images = array_merge($attr_value_prev_image,$images);
+                    $name                   = $postData['name'] ?? [];
+                    $is_price_effect        = $postData['is_price_effect'] ?? [];
+                    $attr_value             = $postData['attr_value'] ?? [];
                     // Helper::pr($images);
                     /* old code */
                         // if(!empty($name)){
@@ -235,77 +201,14 @@ class AttributeController extends Controller
                                     for($c=0;$c<count($attr_value);$c++){
                                         if(array_key_exists("attr_val_id",$postData)){
                                             if($attr_val_id[$c] != ''){
-                                                if(array_key_exists("attr_value_image",$postData)){
-                                                    $fields = [
-                                                        'parent_category'               => $postData['parent_category'],
-                                                        'sub_category_id'               => $postData['sub_category_id'],
-                                                        'attr_id'                       => $attr_id,
-                                                        'attr_value'                    => $attr_value[$c],
-                                                        'price_type'                    => $price_type[$c],
-                                                        'price_val'                     => $price_val[$c],
-                                                        'attr_value_image'              => $images[$c],
-                                                        'ref_val'                       => $ref_val[$c],
-                                                    ];
-                                                } else {
-                                                    $fields = [
-                                                        'parent_category'               => $postData['parent_category'],
-                                                        'sub_category_id'               => $postData['sub_category_id'],
-                                                        'attr_id'                       => $attr_id,
-                                                        'attr_value'                    => $attr_value[$c],
-                                                        'price_type'                    => $price_type[$c],
-                                                        'price_val'                     => $price_val[$c],
-                                                        'ref_val'                       => $ref_val[$c],
-                                                    ];
-                                                }
+                                                $fields = $this->attributeValueFields($postData, $attr_id, $attr_value[$c]);
                                                 AttributeValue::where('id', '=', $attr_val_id[$c])->update($fields);
                                             } else {
-                                                if(array_key_exists("attr_value_image",$postData)){
-                                                    $fields = [
-                                                        'parent_category'               => $postData['parent_category'],
-                                                        'sub_category_id'               => $postData['sub_category_id'],
-                                                        'attr_id'                       => $attr_id,
-                                                        'attr_value'                    => $attr_value[$c],
-                                                        'price_type'                    => $price_type[$c],
-                                                        'price_val'                     => $price_val[$c],
-                                                        'attr_value_image'              => $images[$c],
-                                                        'ref_val'                       => $ref_val[$c],
-                                                    ];
-                                                } else {
-                                                    $fields = [
-                                                        'parent_category'               => $postData['parent_category'],
-                                                        'sub_category_id'               => $postData['sub_category_id'],
-                                                        'attr_id'                       => $attr_id,
-                                                        'attr_value'                    => $attr_value[$c],
-                                                        'price_type'                    => $price_type[$c],
-                                                        'price_val'                     => $price_val[$c],
-                                                        'ref_val'                       => $ref_val[$c],
-                                                    ];
-                                                }
+                                                $fields = $this->attributeValueFields($postData, $attr_id, $attr_value[$c]);
                                                 AttributeValue::insertGetId($fields);
                                             }
                                         } else {
-                                            if(array_key_exists("attr_value_image",$postData)){
-                                                $fields = [
-                                                    'parent_category'               => $postData['parent_category'],
-                                                    'sub_category_id'               => $postData['sub_category_id'],
-                                                    'attr_id'                       => $attr_id,
-                                                    'attr_value'                    => $attr_value[$c],
-                                                    'price_type'                    => $price_type[$c],
-                                                    'price_val'                     => $price_val[$c],
-                                                    'attr_value_image'              => $images[$c],
-                                                    'ref_val'                       => $ref_val[$c],
-                                                ];
-                                            } else {
-                                                $fields = [
-                                                    'parent_category'               => $postData['parent_category'],
-                                                    'sub_category_id'               => $postData['sub_category_id'],
-                                                    'attr_id'                       => $attr_id,
-                                                    'attr_value'                    => $attr_value[$c],
-                                                    'price_type'                    => $price_type[$c],
-                                                    'price_val'                     => $price_val[$c],
-                                                    'ref_val'                       => $ref_val[$c],
-                                                ];
-                                            }
+                                            $fields = $this->attributeValueFields($postData, $attr_id, $attr_value[$c]);
                                             AttributeValue::insertGetId($fields);
                                         }
                                     }
@@ -357,5 +260,20 @@ class AttributeController extends Controller
             }
         }
         echo json_encode($attrValues);
+    }
+    private function attributeValueFields(array $postData, int $attrId, $attributeValue): array
+    {
+        $attributeValue = trim((string) $attributeValue);
+
+        return [
+            'parent_category'  => $postData['parent_category'],
+            'sub_category_id'  => $postData['sub_category_id'],
+            'attr_id'          => $attrId,
+            'attr_value'       => $attributeValue,
+            'price_type'       => 'FLAT',
+            'price_val'        => 0,
+            'attr_value_image' => null,
+            'ref_val'          => $attributeValue,
+        ];
     }
 }
