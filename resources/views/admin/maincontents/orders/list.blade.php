@@ -69,7 +69,7 @@ $controllerRoute = $module['controller_route'];
                     <?=$row->checkout_type?>
                   </td>
                   <td>
-                    $<?=$row->net_amt?>
+                    &#8377;<?=$row->net_amt?>
                   </td>
                   <!-- <td>
                     <?=(($row->payment_status)?'<span class="text-success fw-bold">PAYMENT SUCCESS</span>':'<span class="text-danger fw-bold">PAYMENT FAILED</span>')?><br>

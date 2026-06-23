@@ -628,7 +628,7 @@ $controllerRoute = $module['controller_route'];
                                     <a href="<?=url('admin/' . $controllerRoute . '/edit/'.Helper::encoded($row->id))?>">
                                        <ul class="stoke-details">
                                           <li><?=$row->sub_category_name?></li>
-                                          <li>$<?=number_format($row->discounted_price,2)?> <span style="text-decoration: line-through;">$<?=number_format($row->base_price,2)?></span> <span>(<?=$row->price_percentage?>)</span></li>
+                                          <li>&#8377;<?=number_format($row->discounted_price,2)?> <span style="text-decoration: line-through;">&#8377;<?=number_format($row->base_price,2)?></span> <span>(<?=$row->price_percentage?>)</span></li>
                                           <li><?=$row->product_sku?></li>
                                           <li>
                                              <?php if($row->status == 1){?>
@@ -672,7 +672,7 @@ $controllerRoute = $module['controller_route'];
                                        <?php if(!empty($row->color)){?><p class="mb-1">Color: <?=$row->color?></p><?php }?>
                                        <div class="grid-stoke-details">
                                        <p><?=$row->sub_category_name?></p>
-                                       <p>$<?=number_format($row->discounted_price,2)?> <span style="text-decoration: line-through;">$<?=number_format($row->base_price,2)?></span> <span>(<?=$row->price_percentage?>)</span></p>
+                                       <p>&#8377;<?=number_format($row->discounted_price,2)?> <span style="text-decoration: line-through;">&#8377;<?=number_format($row->base_price,2)?></span> <span>(<?=$row->price_percentage?>)</span></p>
                                        <p><?=$row->product_sku?></p>
                                        </div>
                                     </a>

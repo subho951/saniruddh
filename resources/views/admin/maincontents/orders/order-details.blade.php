@@ -166,8 +166,8 @@ $generalSetting = GeneralSetting::find(1);
                                      <td><?=$sizeColor?></td>
                                      <td><?=$sku?></td>
                                      <td class="text-center"><?=$orderDetail->qty?></td>
-                                     <td class="text-end">$<?=number_format($orderDetail->rate,2)?></td>
-                                     <td class="text-end">$<?=number_format($orderDetail->total,2)?></td>
+                                     <td class="text-end">&#8377;<?=number_format($orderDetail->rate,2)?></td>
+                                     <td class="text-end">&#8377;<?=number_format($orderDetail->total,2)?></td>
                                   </tr>
                                <?php } }?>
                             </tbody>
@@ -176,23 +176,23 @@ $generalSetting = GeneralSetting::find(1);
                    </tr>
                    <tr class="bg-light fw-600">
                       <td class="col-7 py-1"></td>
-                      <td class="col-5 py-1 pe-1">Sub Total: <span class="float-end">$<?=number_format($subtotal,2)?></span></td>
+                      <td class="col-5 py-1 pe-1">Sub Total: <span class="float-end">&#8377;<?=number_format($subtotal,2)?></span></td>
                    </tr>
                    <tr class="bg-light fw-600">
                       <td class="col-7 py-1"></td>
-                      <td class="col-5 py-1 pe-1">Discount: <span class="float-end">$<?=number_format($getOrderDetail->disc_amount,2)?></span></td>
+                      <td class="col-5 py-1 pe-1">Discount: <span class="float-end">&#8377;<?=number_format($getOrderDetail->disc_amount,2)?></span></td>
                    </tr>
                    <tr class="bg-light fw-600">
                       <td class="col-7 py-1"></td>
-                      <td class="col-5 py-1 pe-1">Shipping: <span class="float-end">$<?=number_format($getOrderDetail->shipping_amt,2)?></span></td>
+                      <td class="col-5 py-1 pe-1">Shipping: <span class="float-end">&#8377;<?=number_format($getOrderDetail->shipping_amt,2)?></span></td>
                    </tr>
                    <tr class="bg-light fw-600">
                       <td class="col-7 py-1"></td>
-                      <td class="col-5 py-1 pe-1">Tax:<span class="float-end">$<?=number_format($getOrderDetail->tax_amt,2)?></span></td>
+                      <td class="col-5 py-1 pe-1">Tax:<span class="float-end">&#8377;<?=number_format($getOrderDetail->tax_amt,2)?></span></td>
                    </tr>
                    <tr class="bg-light fw-600">
                       <td class="col-7 py-1"></td>
-                      <td class="col-5 py-1 pe-1">Total: <span class="float-end">$<?=number_format($getOrderDetail->net_amt,2)?></span></td>
+                      <td class="col-5 py-1 pe-1">Total: <span class="float-end">&#8377;<?=number_format($getOrderDetail->net_amt,2)?></span></td>
                    </tr>
                    <tr class="bg-light fw-600">
                       <td class="col-7 py-1">Tracking Number : <?=$getOrderDetail->tracking_number?></td>

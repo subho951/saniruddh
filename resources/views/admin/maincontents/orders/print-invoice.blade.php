@@ -279,7 +279,7 @@ border: 1px solid #ccc;
                             <h6>Hand Knitted 100% Merino Wool Snowboard Earflap Ski Peru Chullo Hat Nepalese Snowboard Polar Fleece Lined Hat Woolen Stocking Cap Sherpa Hat</h6>
                         </td>
                         <td>
-                            1 x $24.00
+                            1 x &#8377;24.00
                         </td>
                     </tr>
                     <tr>
@@ -290,7 +290,7 @@ border: 1px solid #ccc;
                             <h6>Hand Knitted 100% Merino Wool Snowboard Earflap Ski Peru Chullo Hat Nepalese </h6>
                         </td>
                         <td>
-                            1 x $24.00
+                            1 x &#8377;24.00
                         </td>
                     </tr>
                     <tr>
@@ -299,21 +299,21 @@ border: 1px solid #ccc;
                             Item total 
                         </td>
                         <td class="border-none text-right">
-                            $24.00
+                            &#8377;24.00
                         </td>
                     </tr>
                     <tr>
                         <td class="border-none text-right"></td>
                         <td class="border-none text-right">Shipping total</td>
                         <td class="border-none text-right">
-                            $2400.00
+                            &#8377;2400.00
                         </td>
                     </tr>
                     <tr>
                         <td class="border-none text-right"></td>
                         <td class="border-none text-right"><strong>Order total</strong></td>
                         <td class="border-none text-right">
-                           <strong> $32.55</strong>
+                           <strong> &#8377;32.55</strong>
                         </td>
                     </tr>
                    

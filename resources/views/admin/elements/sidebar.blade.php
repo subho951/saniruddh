@@ -12,15 +12,16 @@ $routeName    = Route::current();
 $pageName     = explode("/", $routeName->uri());
 $pageSegment  = $pageName[1];
 $pageFunction = ((count($pageName)>2)?$pageName[1]:'');
+$pageAction   = $pageName[2] ?? '';
 $parameters   = $routeName->parameters();
+$pId1         = null;
+$pId2         = null;
 // dd($routeName);
-if(!empty($parameters)){
+if($pageSegment == 'orders' && $pageAction == 'list' && !empty($parameters)){
   if (array_key_exists("id1",$parameters)){
     $pId1 = Helper::decoded($parameters['id1']);
-  } else {
-    $pId1 = Helper::decoded($parameters['id']);
   }
-  if(count($parameters) > 1){
+  if (array_key_exists("id2",$parameters)){
     $pId2 = Helper::decoded($parameters['id2']);
   }
 }
