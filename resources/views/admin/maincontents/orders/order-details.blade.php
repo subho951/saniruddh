@@ -46,7 +46,7 @@ $generalSetting = GeneralSetting::find(1);
              <header class="text-center mt-4">
                 <div class="btn-group btn-group-sm d-print-none">
                   <!-- <a href="javascript:window.print()" class="btn btn-light border text-black-50 shadow-none"><i class="fa fa-print"></i> Print & Download</a> -->
-                  <a href="<?=env('UPLOADS_URL').'orders/'.$getOrderDetail->invoice_pdf?>" class="btn btn-light border text-black-50 shadow-none" target="_blank"><i class="fa fa-print"></i> Print Invoice</a>
+                  <a href="<?=url('admin/' . $module['controller_route'] . '/print-invoice/'.Helper::encoded($getOrderDetail->id))?>" class="btn btn-light border text-black-50 shadow-none" target="_blank"><i class="fa fa-print"></i> Print Invoice</a>
                </div>
              </header>
              <table class="table table-bordered global_table mb-0">

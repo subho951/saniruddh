@@ -140,7 +140,7 @@ $controllerRoute = $module['controller_route'];
                   <td>
                     <?php if($row->payment_status){?>
                       <!-- <a href="<?=url('admin/' . $controllerRoute . '/print-invoice/'.Helper::encoded($row->id))?>" class="btn btn-outline-primary btn-sm" title="Edit <?=$module['title']?>" target="_blank"><i class="fa fa-print"></i> Print Invoice PDF</a> -->
-                      <a href="<?=env('UPLOADS_URL').'orders/'.$row->invoice_pdf?>" class="btn btn-outline-primary btn-sm" title="Edit <?=$module['title']?>" target="_blank"><i class="fa fa-print"></i> Print Invoice</a>
+                      <a href="<?=url('admin/' . $controllerRoute . '/print-invoice/'.Helper::encoded($row->id))?>" class="btn btn-outline-primary btn-sm" title="Print Invoice" target="_blank"><i class="fa fa-print"></i> Print Invoice</a>
                       <br><br>
                     <?php }?>
                     

@@ -154,16 +154,21 @@ class OrderController extends Controller
         $uId                            = session('user_id');
         $id                             = Helper::decoded($id);
         $data['getOrderDetail']         = Order::where('id', '=', $id)->first();
+        if(! $data['getOrderDetail']){
+            abort(404, 'Order not found');
+        }
 
         /* generate inspection pdf & save it to directory */
             $enquiry_no                     = (($data['getOrderDetail'])?$data['getOrderDetail']->order_no:'');
             $data['generalSetting']         = GeneralSetting::find('1');
             $subject                        = $data['generalSetting']->site_name . ' Invoice' . $enquiry_no;
-            $message                        = view('email-templates.print-invoice',$data);                        
+            $message                        = view('email-templates.print-invoice',$data)->render();                        
             // echo $message;die;
             // Initialize Dompdf with options
             $options    = new Options();
-            $options->set('defaultFont', 'Courier');
+            $options->set('defaultFont', 'DejaVu Sans');
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
             $dompdf     = new Dompdf($options);
             // Load HTML content
             $html       = $message;
@@ -179,17 +184,22 @@ class OrderController extends Controller
             // $dompdf->stream("document.pdf", array("Attachment" => false));die;
 
             // Define the path where the PDF will be saved
-            $filename   = $enquiry_no.'.pdf';
-            $pdfFilePath = 'public/uploads/orders/' . $filename;
+            $filename   = preg_replace('/[^A-Za-z0-9._-]+/', '-', $enquiry_no).'.pdf';
+            $pdfDir     = public_path('uploads/orders');
+            if(! is_dir($pdfDir)){
+                mkdir($pdfDir, 0755, true);
+            }
+            $pdfFilePath = $pdfDir . DIRECTORY_SEPARATOR . $filename;
 
             // Save the PDF to a file
             file_put_contents($pdfFilePath, $output);
             Order::where('id', '=', $id)->update(['invoice_pdf' => $filename]);
             // echo "PDF file has been generated and saved at: " . $pdfFilePath;die;
         /* generate inspection pdf & save it to directory */
-        
-        $page_name                      = 'print-invoice';
-        return view('admin.maincontents.orders.'.$page_name, $data);
+
+        return response($output, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
     }
     public function orderDetails(Request $request, $id){
         $uId                            = session('user_id');
